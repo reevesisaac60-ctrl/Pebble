@@ -1,0 +1,20 @@
+import package filesystem
+import package string
+
+fn main() {
+    let directory = "filesystem_example_output"
+    let path = "filesystem_example_output/note.txt"
+    print("Before the write the file exists:", filesystem.exists(path))
+
+    filesystem.mkdir(directory)
+    filesystem.write(path, "A note from Pebble.\n")
+
+    print("After the write the file exists:", filesystem.exists(path))
+
+    let contents = filesystem.read(path)
+    print("The file holds", string.length(contents), "bytes:")
+    print(contents)
+
+    print("The directory holds:")
+    print(filesystem.list(directory))
+}

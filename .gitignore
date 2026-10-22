@@ -1,0 +1,18 @@
+/build/
+/cmake-build-*/
+/.cache/
+/filesystem_example_output/
+# The programs that the Studio builds beside an example.
+/examples/*/build/
+compile_commands.json
+
+# Root-level generated CMake files
+/CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+/Makefile
+
+# Temporary log-parity backups (preserved locally)
+src/c/package.c.log-parity-20261021-151849.bak
+src/c/codegen.c.log-parity-20261021-151849.bak
+tests/test_packages_c.c.log-parity-20261021-151849.bak

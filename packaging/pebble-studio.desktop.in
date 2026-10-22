@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Pebble Studio
+GenericName=Pebble IDE
+Comment=An environment for the Pebble language
+Exec=@CMAKE_INSTALL_BINDIR@/pebble_studio %f
+Icon=pebble-studio
+Terminal=false
+Categories=Development;IDE;
+MimeType=text/x-pebble;
+StartupNotify=true
+StartupWMClass=pebble_studio

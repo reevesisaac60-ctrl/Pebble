@@ -1,0 +1,24 @@
+import package math
+
+fn add(a: Int, b: Int) -> Int {
+    return a + b
+}
+
+fn main() {
+    let x = 10
+    let y = 20
+    let sum = add(x, y)
+    print(sum)
+
+    if sum > 25 {
+        print("large")
+    } else {
+        print("small")
+    }
+
+    var i = 0
+    while i < 3 {
+        print(i)
+        i = i + 1
+    }
+}

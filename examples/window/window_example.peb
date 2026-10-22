@@ -1,0 +1,10 @@
+import package Window
+
+fn main() {
+  Window:Create("Window Example", 640, 480)
+  while !Window:ShouldClose() {
+    Window:PollEvents()
+    Window:SwapBuffers()
+  }
+  Window:Close()
+}

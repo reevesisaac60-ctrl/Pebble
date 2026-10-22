@@ -1,0 +1,33 @@
+import package math
+
+fn add(a: Int, b: Int) -> Int {
+    return a + b
+}
+
+fn classify(value: Int) -> String {
+    if value > 20 {
+        return "large"
+    } else {
+        return "small"
+    }
+}
+
+fn main() {
+    let x = 10
+    let y = 20
+    var result = add(x, y)
+    result = result + 1
+
+    let total = add(x, y)
+    let doubled = total + 2
+
+    var index = 0
+
+    while index < 3 {
+        print(index)
+        index = index + 1
+    }
+
+    print(classify(result), doubled)
+    print(math.max(result, doubled))
+}

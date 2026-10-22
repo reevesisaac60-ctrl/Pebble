@@ -1,0 +1,9 @@
+import package Math
+import package Log
+
+fn main() {
+  let angle = Math:Radians(90.0)
+  let result = Math:Sin(angle)
+
+  print(result)
+}

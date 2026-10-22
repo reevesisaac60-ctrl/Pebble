@@ -1,0 +1,22 @@
+import package time
+
+fn main() {
+    let start = time.now()
+    print("The program has been running for", start, "seconds")
+
+    let first = time.delta()
+    print("The first frame is", first, "seconds long")
+
+    var frame = 0
+
+    while frame < 10 {
+        time.sleep(0.01)
+        let length = time.delta()
+        print("Frame", frame, "lasted", length, "seconds")
+        frame = frame + 1
+    }
+
+    print("The program has been running for", time.now(), "seconds")
+    print("The clock counts", time.ticks(), "nanoseconds")
+    print("The machine counts", time.unix(), "seconds since 1970")
+}

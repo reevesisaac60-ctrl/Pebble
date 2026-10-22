@@ -1,0 +1,14 @@
+import package Window
+import package Input
+
+fn main() {
+  Window:Create("Input Example", 640, 480)
+  while !Window:ShouldClose() {
+    Window:PollEvents()
+    if Input:IsKeyDown("W") {
+      print("W pressed")
+    }
+    Window:SwapBuffers()
+  }
+  Window:Close()
+}

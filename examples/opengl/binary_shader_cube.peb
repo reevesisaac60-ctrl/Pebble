@@ -1,0 +1,73 @@
+import package Window
+import package OpenGL
+import package time
+import package Math
+import package filesystem
+import package Log
+
+fn main() {
+    let width = 900
+    let height = 680
+    Window:Create("Pebble - Shader Example", width, height)
+
+    if !OpenGL:Initialize() {
+        Log:Error("OpenGL function loading failed")
+        Window:Close()
+        return
+    }
+
+    OpenGL:Viewport(width, height)
+    OpenGL:EnableDepthTest()
+
+    OpenGL:ClearColor(0.17, 0.17, 0.17, 1.0)
+    let vertices = filesystem.read("cube_vertices.csv")
+    let indices = filesystem.read("cube_indices.csv")
+    let vertexShader = filesystem.read("binary_cube.vert")
+    let fragmentShader = filesystem.read("binary_cube.frag")
+
+    let program = OpenGL:CreateProgram(vertexShader, fragmentShader)
+    let projectionLocation = OpenGL:UniformLocation(program, "uProjection")
+    let viewLocation = OpenGL:UniformLocation(program, "uView")
+    let modelLocation = OpenGL:UniformLocation(program, "uModel")
+
+    OpenGL:UseProgram(program)
+    OpenGL:UniformMat4(projectionLocation, 1.299, 0.0, 0.0, 0.0, 0.0, 1.732, 0.0, 0.0, 0.0, 0.0, -1.002, -1.0, 0.0, 0.0, -0.2002, 0.0)
+    OpenGL:UniformMat4(viewLocation, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -6.0, 1.0)
+
+    let vertexArray = OpenGL:CreateVertexArray()
+    OpenGL:BindVertexArray(vertexArray)
+
+    let vertexBuffer = OpenGL:CreateBuffer()
+    OpenGL:BindArrayBuffer(vertexBuffer)
+    OpenGL:UploadArrayBuffer(vertices)
+
+    let indexBuffer = OpenGL:CreateBuffer()
+    OpenGL:BindElementBuffer(indexBuffer)
+    OpenGL:UploadElementBuffer(indices)
+    OpenGL:VertexAttribute(0, 3, 20, 0)
+    OpenGL:VertexAttribute(1, 2, 20, 12)
+
+    while !Window:ShouldClose() {
+        Window:PollEvents()
+        OpenGL:Clear()
+        OpenGL:UseProgram(program)
+
+        let angle = time.now() * 0.55
+        let cosine = Math:Cos(angle)
+        let sine = Math:Sin(angle)
+        let tiltCosine = 0.8192
+        let tiltSine = 0.5736
+
+        OpenGL:UniformMat4(modelLocation, cosine, tiltSine * sine, -tiltCosine * sine, 0.0, 0.0, tiltCosine, tiltSine, 0.0, sine, -tiltSine * cosine, tiltCosine * cosine, 0.0, 0.0, 0.0, 0.0, 1.0)
+        OpenGL:BindVertexArray(vertexArray)
+        OpenGL:DrawElements(36)
+        Window:SwapBuffers()
+    }
+
+    OpenGL:DeleteBuffer(indexBuffer)
+    OpenGL:DeleteBuffer(vertexBuffer)
+    OpenGL:DeleteVertexArray(vertexArray)
+    OpenGL:DeleteProgram(program)
+    OpenGL:Shutdown()
+    Window:Close()
+}

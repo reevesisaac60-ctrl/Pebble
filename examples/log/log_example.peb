@@ -1,0 +1,13 @@
+import package Log
+import package Math
+
+fn main() {
+  Log:Print("Hello from Pebble")
+  Log:Warning("This is a warning")
+  Log:Error("This is an error")
+
+  let angle = Math:Radians(90.0)
+  let result = Math:Sin(angle)
+
+  print(result)
+}
