@@ -416,11 +416,40 @@ if(Qt6_FOUND)
         )
     endforeach()
 
-    install(CODE "
-        set(PEBBLE_LAUNCHER \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/applications/pebble-studio.desktop\")
-        file(READ \"${CMAKE_CURRENT_SOURCE_DIR}/packaging/pebble-studio.desktop.in\" PEBBLE_LAUNCHER_CONTENT)
-        string(REPLACE \"@CMAKE_INSTALL_BINDIR@\" \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}\" PEBBLE_LAUNCHER_CONTENT \"\${PEBBLE_LAUNCHER_CONTENT}\")
-        file(WRITE \"\${PEBBLE_LAUNCHER}\" \"\${PEBBLE_LAUNCHER_CONTENT}\")
-        message(STATUS \"Wrote the launcher \${PEBBLE_LAUNCHER}\")
-    ")
+    set(PEBBLE_STUDIO_BINDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/packaging/pebble-studio.desktop.in
+        ${CMAKE_CURRENT_BINARY_DIR}/pebble-studio.desktop @ONLY
+    )
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pebble-studio.desktop
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+endif()
+
+# ---------------------------------------------------------------------------
+# Pebble install rules (compiler/CLI and shared resources)
+# ---------------------------------------------------------------------------
+if(NOT TARGET pebble_install_rules_added)
+    set(TARGET pebble_install_rules_added TRUE)
+    include(GNUInstallDirs)
+    
+    install(TARGETS pebble pebble_native
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        OPTIONAL
+    )
+    
+    install(DIRECTORY examples/
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/pebble/examples
+        OPTIONAL
+    )
+    
+    install(FILES README.md
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/pebble/docs
+        OPTIONAL
+    )
+    
+    install(DIRECTORY docs/
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/pebble/docs
+        OPTIONAL
+        PATTERN "*.cmake" EXCLUDE
+    )
 endif()

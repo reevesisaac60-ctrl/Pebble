@@ -1,0 +1,103 @@
+Start testing: Oct 28 19:25 GMT
+----------------------------------------------------------
+1/3 Testing: pebble_engine_tests
+1/3 Test: pebble_engine_tests
+Command: "/home/astro/Projects/Pebble/engine/build/pebble_engine_tests"
+Directory: /home/astro/Projects/Pebble/engine/build
+"pebble_engine_tests" start time: Oct 28 19:25 GMT
+Output:
+----------------------------------------------------------
+Scene: bad file header in '/tmp/test_bad_header.pebscene'
+Scene: unsupported format version 99
+Scene: duplicate node id 42
+Scene: invalid parent reference for node 1
+Scene: unsupported node type 'DoesNotExist'
+parent-child tests passed
+transform inheritance tests passed
+create/delete tests passed
+serialization round-trip tests passed
+empty scene serialization tests passed
+invalid/unsupported data tests passed
+v1 migration tests passed
+camera matrix tests passed
+camera invalid projection tests passed
+camera selection/fallback tests passed
+editor camera movement tests passed
+editor camera free-look tests passed
+editor camera forward-at-pitches tests passed
+editor camera movement symmetry tests passed
+editor camera default FOV test passed
+editor camera continuous yaw test passed
+editor camera no-roll-accumulation test passed
+editor camera projection aspect ratio test passed
+editor camera projection invalid aspect test passed
+editor camera position-preserved-during-mouse-look tests passed
+editor camera horizontal movement at yaws tests passed
+editor camera movement while looking up/down tests passed
+editor camera vertical movement world-aligned tests passed
+editor camera diagonal movement normalization tests passed
+editor camera lookAt focus tests passed
+editor camera vertical movement tests passed
+editor camera speed boost tests passed
+editor camera focus independence tests passed
+point light limit/attenuation tests passed
+fog range validation tests passed
+lighting/environment serialization tests passed
+  cube mesh generation test passed
+  sphere mesh generation test passed
+  plane mesh generation test passed
+  cylinder mesh generation test passed
+  cone mesh generation test passed
+  capsule mesh generation test passed
+mesh generation tests passed
+  material defaults test passed
+  material validation test passed
+  material manager test passed
+material tests passed
+  serialization with materials test passed
+serialization with materials test passed
+  reparenting cycle prevention test passed
+reparenting cycle prevention test passed
+asset path resolution tests passed
+FAIL: uppercase .PPM rejected by ppm filter
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Failed.
+"pebble_engine_tests" end time: Oct 28 19:25 GMT
+"pebble_engine_tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/3 Testing: pebble_ui_layout_tests
+2/3 Test: pebble_ui_layout_tests
+Command: "/home/astro/Projects/Pebble/engine/build/pebble_ui_layout_tests"
+Directory: /home/astro/Projects/Pebble/engine/build
+"pebble_ui_layout_tests" start time: Oct 28 19:25 GMT
+Output:
+----------------------------------------------------------
+PebbleUI layout tests passed (5 groups).
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"pebble_ui_layout_tests" end time: Oct 28 19:25 GMT
+"pebble_ui_layout_tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/3 Testing: pebble_ui_context_tests
+3/3 Test: pebble_ui_context_tests
+Command: "/home/astro/Projects/Pebble/engine/build/pebble_ui_context_tests"
+Directory: /home/astro/Projects/Pebble/engine/build
+"pebble_ui_context_tests" start time: Oct 28 19:25 GMT
+Output:
+----------------------------------------------------------
+PebbleUI context tests passed (2 groups).
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"pebble_ui_context_tests" end time: Oct 28 19:25 GMT
+"pebble_ui_context_tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 28 19:25 GMT

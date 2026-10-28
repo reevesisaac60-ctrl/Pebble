@@ -1,0 +1,16 @@
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/pebble_imgui.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/pebble_engine_lib.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/pebble_engine.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/pebble_ui_demo.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/pebble_engine_assets.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/sdl_diag.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/pebble_engine_tests.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/pebble_ui_layout_tests.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/pebble_ui_context_tests.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/test.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/edit_cache.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/rebuild_cache.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/list_install_components.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/install.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/install/local.dir
+/home/astro/Projects/Pebble/engine/build/CMakeFiles/install/strip.dir
