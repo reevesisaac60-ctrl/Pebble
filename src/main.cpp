@@ -89,6 +89,17 @@ std::string readSource(const std::string& filename) {
 }
 
 std::string shellQuote(const std::string& value) {
+#if defined(_WIN32)
+    // Windows command shells use double quotes, not POSIX single quotes.
+    std::string result = "\"";
+
+    for (const char character : value) {
+        result += character;
+    }
+
+    result += "\"";
+    return result;
+#else
     std::string result = "'";
 
     for (const char character : value) {
@@ -101,6 +112,7 @@ std::string shellQuote(const std::string& value) {
 
     result += "'";
     return result;
+#endif
 }
 
 std::string artifactTag(const std::string& filename) {
@@ -192,6 +204,55 @@ std::vector<std::string> resourceRootsFor(const std::string& filename) {
     return result;
 }
 
+fs::path cacheHomeDirectory() {
+    if (const char* xdgCacheHome = std::getenv("XDG_CACHE_HOME")) {
+        if (xdgCacheHome[0] != '\0') {
+            return fs::path(xdgCacheHome);
+        }
+    }
+
+    if (const char* home = std::getenv("HOME")) {
+        if (home[0] != '\0') {
+            return fs::path(home) / ".cache";
+        }
+    }
+
+    return fs::path(".");
+}
+
+fs::path buildOutputDirectory(const std::string& filename) {
+    std::error_code code;
+
+    const fs::path inputPath = fs::absolute(filename, code);
+    const fs::path sourceDirectory = inputPath.has_parent_path()
+        ? inputPath.parent_path()
+        : fs::current_path(code);
+
+    const fs::path preferred = sourceDirectory / "build";
+
+    if (fs::create_directories(preferred, code) ||
+        fs::is_directory(preferred, code)) {
+        return preferred;
+    }
+
+    code.clear();
+
+    const fs::path fallback =
+        cacheHomeDirectory() / "pebble" / "build" /
+        artifactTag(sourceDirectory.string());
+
+    if (fs::create_directories(fallback, code) ||
+        fs::is_directory(fallback, code)) {
+        return fallback;
+    }
+
+    throw std::runtime_error(
+        "cannot create build directory '" + preferred.string() +
+        "': " + code.message() +
+        " (working directory: " + fs::current_path().string() + ")"
+    );
+}
+
 struct BuildOutput {
     fs::path source;
     fs::path executable;
@@ -208,14 +269,17 @@ BuildOutput buildProgram(
         throw std::runtime_error("source filename has no usable stem");
     }
 
-    const fs::path outputDirectory = "build";
-    fs::create_directories(outputDirectory);
+    const fs::path outputDirectory = buildOutputDirectory(filename);
 
     const std::string artifactName = stem + "-" + artifactTag(filename);
 
     const fs::path generatedPath =
         outputDirectory / (artifactName + ".generated.cpp");
+#if defined(_WIN32)
+    const fs::path executablePath = outputDirectory / (artifactName + ".exe");
+#else
     const fs::path executablePath = outputDirectory / artifactName;
+#endif
 
     pebble::CodegenOptions options;
     options.resourceRoots = resourceRootsFor(filename);
@@ -254,7 +318,9 @@ BuildOutput buildProgram(
         " -lglfw3 -framework OpenGL -framework Cocoa -framework IOKit "
         "-framework CoreVideo";
 #else
-    const std::string nativeLibraries = " -lglfw -lGL -lX11 -lpthread -ldl";
+    const std::string nativeLibraries =
+        " $(pkg-config --cflags --libs glfw3 gl 2>/dev/null || "
+        "echo -lglfw -lGL -lX11 -lpthread -ldl)";
 #endif
 
     const std::string command =

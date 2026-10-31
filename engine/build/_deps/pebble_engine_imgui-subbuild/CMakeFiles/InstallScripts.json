@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/astro/Projects/Pebble/engine/build/_deps/pebble_engine_imgui-subbuild/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

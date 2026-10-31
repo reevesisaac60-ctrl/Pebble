@@ -324,6 +324,14 @@ add_test(
 )
 set_tests_properties(pebble_resource_paths PROPERTIES TIMEOUT 600)
 
+add_test(
+    NAME pebble_build_locations
+    COMMAND ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_build_locations.py
+        $<TARGET_FILE:pebble>
+        $<TARGET_FILE:pebble_native>
+)
+
 find_package(Qt6 COMPONENTS Widgets QUIET)
 if(Qt6_FOUND)
     add_library(pebble_studio_assets OBJECT)

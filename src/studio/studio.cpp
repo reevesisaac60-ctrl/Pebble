@@ -6,6 +6,7 @@
 #include "pebble_manifest/project.h"
 
 #include <QAction>
+#include <QApplication>
 #include <QCheckBox>
 #include <QCloseEvent>
 #include <QContextMenuEvent>
@@ -41,6 +42,7 @@
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <QPushButton>
+#include <QGuiApplication>
 #include <QScreen>
 #include <QRegularExpression>
 #include <QResizeEvent>
@@ -49,6 +51,7 @@
 #include <QSlider>
 #include <QShortcut>
 #include <QSplitter>
+#include <QStyledItemDelegate>
 #include <QStackedWidget>
 #include <QStatusBar>
 #include <QStyle>
@@ -116,6 +119,13 @@ QString findInSearchPath(const QString &name, const QString &searchPath) {
         return QString();
     }
 
+    QString executableName = name;
+#ifdef Q_OS_WIN
+    if (!executableName.endsWith(".exe", Qt::CaseInsensitive)) {
+        executableName += ".exe";
+    }
+#endif
+
     const QChar separator = QChar::fromLatin1(
         #ifdef Q_OS_WIN
         ';'
@@ -130,7 +140,7 @@ QString findInSearchPath(const QString &name, const QString &searchPath) {
     );
 
     for (const QString &directory : directories) {
-        const QString candidate = directory + "/" + name;
+        const QString candidate = directory + "/" + executableName;
 
         if (isUsableExecutable(candidate)) {
             return candidate;
@@ -147,7 +157,11 @@ ExecutableResolution resolvePebbleExecutable(
     const QString &envPebble,
     const QString &searchPath
 ) {
-    const QString adjacent = studioDirectory(studioBinary) + "/pebble";
+    QString executableName = "pebble";
+#ifdef Q_OS_WIN
+    executableName += ".exe";
+#endif
+    const QString adjacent = studioDirectory(studioBinary) + "/" + executableName;
 
     if (isUsableExecutable(adjacent)) {
         return {true, adjacent, QString()};
@@ -157,7 +171,7 @@ ExecutableResolution resolvePebbleExecutable(
         return {true, envPebble, QString()};
     }
 
-    const QString found = findInSearchPath("pebble", searchPath);
+    const QString found = findInSearchPath(executableName, searchPath);
 
     if (!found.isEmpty()) {
         return {true, found, QString()};
@@ -1106,6 +1120,53 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
     }
 }
 
+namespace {
+
+// Completion rows: name, kind and signature in aligned columns, using the
+// editor's own syntax colours instead of one run of plain text.
+class CompletionDelegate : public QStyledItemDelegate {
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+    void paint(QPainter *painter, const QStyleOptionViewItem &option,
+               const QModelIndex &index) const override {
+        QStyleOptionViewItem opt = option;
+        initStyleOption(&opt, index);
+        opt.text.clear();
+        opt.state &= ~QStyle::State_HasFocus;
+        const QWidget *widget = opt.widget;
+        QStyle *style = widget != nullptr ? widget->style() : QApplication::style();
+        style->drawControl(QStyle::CE_ItemViewItem, &opt, painter, widget);
+
+        const QString name = index.data(Qt::UserRole).toString();
+        const QString kind = index.data(Qt::UserRole + 1).toString();
+        const QString signature = index.data(Qt::UserRole + 2).toString();
+
+        const QFontMetrics metrics(opt.font);
+        const int pad = 8;
+        const int nameWidth = metrics.horizontalAdvance(QLatin1Char('0')) * 16;
+        const int kindWidth = metrics.horizontalAdvance(QLatin1Char('0')) * 9;
+        QRect row = opt.rect.adjusted(pad, 0, -pad, 0);
+        painter->save();
+        painter->setFont(opt.font);
+        auto column = [&](int width, const QString &text, const char *colour) {
+            const QRect cell(row.left(), row.top(), width, row.height());
+            painter->setPen(QColor(colour));
+            painter->drawText(cell, Qt::AlignVCenter | Qt::AlignLeft,
+                              metrics.elidedText(text, Qt::ElideRight, width - 8));
+            row.setLeft(row.left() + width);
+        };
+        column(nameWidth, name, theme::text);
+        column(kindWidth, kind, theme::textFaint);
+        painter->setPen(QColor(theme::function));
+        painter->drawText(row, Qt::AlignVCenter | Qt::AlignLeft,
+                          metrics.elidedText(signature, Qt::ElideRight, row.width()));
+        painter->restore();
+    }
+};
+
+}  // namespace
+
 CodeEditor::CodeEditor(QWidget *parent)
     : QPlainTextEdit(parent) {
     setObjectName("editor");
@@ -1165,9 +1226,6 @@ CodeEditor::CodeEditor(QWidget *parent)
     setTabStopDistance(fontMetrics().horizontalAdvance(QLatin1Char(' ')) * kIndentWidth);
     document()->setDocumentMargin(12);
 
-    QTextOption option = document()->defaultTextOption();
-    option.setFlags(option.flags() | QTextOption::ShowTabsAndSpaces);
-    document()->setDefaultTextOption(option);
 
     updateLineNumberAreaWidth();
     highlightCurrentLine();
@@ -1213,6 +1271,7 @@ CodeEditor::CodeEditor(QWidget *parent)
     completionList = new QListWidget(completionPopup);
     completionList->setObjectName("intellisense_list");
     completionList->setFocusPolicy(Qt::NoFocus);
+    completionList->setItemDelegate(new CompletionDelegate(completionList));
     completionList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     completionList->setVerticalScrollMode(QAbstractItemView::ScrollPerItem);
     popupLayout->addWidget(completionList);
@@ -1222,10 +1281,6 @@ CodeEditor::CodeEditor(QWidget *parent)
     parameterHint = new QFrame(this, Qt::ToolTip | Qt::FramelessWindowHint);
     parameterHint->setObjectName("parameter_hint");
     parameterHint->setAttribute(Qt::WA_ShowWithoutActivating);
-    parameterHint->setStyleSheet(QStringLiteral(
-        "QFrame#parameter_hint { background: #17171D; border: 1px solid #494653; "
-        "border-radius: 5px; } QLabel { color: #D8D8E0; padding: 7px 10px; }"
-    ));
     auto *hintLayout = new QVBoxLayout(parameterHint);
     hintLayout->setContentsMargins(0, 0, 0, 0);
     parameterHintLabel = new QLabel(parameterHint);
@@ -1346,15 +1401,21 @@ void CodeEditor::refreshCompletions(bool explicitRequest) {
             else if (!item.detail.isEmpty()) display += QStringLiteral("    ") + item.detail;
             auto *entry = new QListWidgetItem(display, completionList);
             entry->setData(Qt::UserRole, item.name);
+            entry->setData(Qt::UserRole + 1, item.kind);
+            entry->setData(Qt::UserRole + 2,
+                           item.signature.isEmpty() ? item.detail : item.signature);
             entry->setToolTip(item.signature.isEmpty() ? item.detail : item.signature);
         }
         completionList->setCurrentRow(qBound(
             0, oldRow < 0 ? 0 : oldRow, static_cast<int>(completionItems.size()) - 1
         ));
         completionList->setFixedWidth(490);
+        const int rowHeight = qMax(1, completionList->sizeHintForRow(0));
         completionList->setFixedHeight(
-            qMin(8, static_cast<int>(completionItems.size())) * 30 + 10
+            qMin(8, static_cast<int>(completionItems.size())) * rowHeight
+            + 2 * completionList->frameWidth() + 8
         );
+        completionPopup->resize(completionPopup->sizeHint());
         completionPopup->show();
         positionCompletionPopup();
         completionPopup->raise();
@@ -1390,8 +1451,8 @@ void CodeEditor::refreshParameterHint() {
         if (rendered.mid(parameterStart, escaped.size()) != escaped) parameterStart = -1;
         if (parameterStart >= 0 && parameterStart < close) {
             rendered.insert(parameterStart + escaped.size(), QStringLiteral("</b>"));
-            rendered.insert(parameterStart, QStringLiteral(
-                "<b style='color:#C4B5FD'>"));
+            rendered.insert(parameterStart, QStringLiteral("<b style='color:%1'>")
+                .arg(QLatin1String(theme::keyword)));
         }
     }
     parameterHintLabel->setProperty("activeParameter", help.activeParameter);
@@ -1466,6 +1527,7 @@ void CodeEditor::positionCompletionPopup() {
 
 void CodeEditor::paintEvent(QPaintEvent *event) {
     QPlainTextEdit::paintEvent(event);
+    paintWhitespaceMarkers();
     if (ghostSuffix.isEmpty() || !hasFocus() || textCursor().hasSelection()) return;
 
     const QRect caret = cursorRect();
@@ -1474,6 +1536,44 @@ void CodeEditor::paintEvent(QPaintEvent *event) {
     painter.setPen(QColor(theme::ghostText));
     painter.setFont(font());
     painter.drawText(caret.left(), caret.top() + fontMetrics().ascent(), ghostSuffix);
+}
+
+// Spaces and tabs stay visible, but as quiet marks that never compete with code.
+void CodeEditor::paintWhitespaceMarkers() {
+    QPainter painter(viewport());
+    painter.setClipRect(viewport()->rect());
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    QColor mark(theme::textFaint);
+    mark.setAlpha(70);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(mark);
+    const qreal bottom = viewport()->height();
+    QTextBlock block = firstVisibleBlock();
+    while (block.isValid()) {
+        const QRectF geometry = blockBoundingGeometry(block).translated(contentOffset());
+        if (geometry.top() > bottom) break;
+        if (block.isVisible() && geometry.bottom() >= 0 && block.layout() != nullptr) {
+            const QString text = block.text();
+            const QTextLayout *layout = block.layout();
+            for (int i = 0; i < layout->lineCount(); ++i) {
+                const QTextLine line = layout->lineAt(i);
+                const int end = line.textStart() + line.textLength();
+                const qreal y = geometry.top() + line.y() + line.height() / 2.0;
+                for (int pos = line.textStart(); pos < end && pos < text.size(); ++pos) {
+                    const QChar ch = text.at(pos);
+                    if (ch != QLatin1Char(' ') && ch != QLatin1Char('\t')) continue;
+                    const qreal x0 = geometry.left() + line.cursorToX(pos);
+                    const qreal x1 = geometry.left() + line.cursorToX(pos + 1);
+                    if (ch == QLatin1Char(' ')) {
+                        painter.drawEllipse(QPointF((x0 + x1) / 2.0, y), 1.0, 1.0);
+                    } else {
+                        painter.drawRect(QRectF(x0 + 2.0, y - 0.5, qMax(2.0, x1 - x0 - 4.0), 1.0));
+                    }
+                }
+            }
+        }
+        block = block.next();
+    }
 }
 
 bool CodeEditor::eventFilter(QObject *watched, QEvent *event) {
@@ -2229,7 +2329,7 @@ WelcomePage::WelcomePage(QWidget *parent)
 
     auto *stripBar = new AnimatedTabBar(strip);
     stripBar->setDocumentMode(true);
-    stripBar->addTab(QStringLiteral("welcome"));
+    stripBar->addTab(QStringLiteral("Welcome"));
     stripBar->setExpanding(false);
     stripTabBar = stripBar;
 
@@ -5318,6 +5418,10 @@ void MainWindow::addDiagnostic(const DiagnosticEntry &entry) {
             entry.message
         }
     );
+
+    item->setForeground(QBrush(QColor(
+        entry.severity == QLatin1String("warning") ? theme::warning : theme::error
+    )));
 
     diagnostics->addItem(item);
 

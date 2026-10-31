@@ -212,7 +212,8 @@ QMenu::separator { background: @line@; height: 1px; margin: 5px 8px; }
 QMenu::icon { padding-left: 6px; }
 
 /* The status bar. */
-QStatusBar { background: @chrome@; border-top: 1px solid @line@; }
+QStatusBar { background: @chrome@; color: @textDim@; border-top: 1px solid @line@;
+            padding: 0 3px; }
 QStatusBar::item { border: none; }
 QStatusBar QLabel { color: @textDim@; padding: 2px 9px; }
 QStatusBar QLabel#document, QStatusBar QLabel#cursor,
@@ -252,7 +253,8 @@ QTreeWidget::item, QListWidget::item { padding: 3px 2px; }
 QTreeWidget::item:hover, QListWidget::item:hover { background: @overlay@; }
 QTreeWidget::item:selected, QListWidget::item:selected { background: @selection@;
                                                            color: @text@; }
-QHeaderView::section { background: transparent; color: @text@;
+QHeaderView { background: transparent; border: none; }
+QHeaderView::section { background: transparent; color: @textDim@;
                         border: none; border-bottom: 1px solid @line@;
                         font-size: 8.5pt; padding: 8px 12px; text-align: left; }
 QWidget#bottom_panel { background: transparent; border: none; }
@@ -275,6 +277,9 @@ QTreeWidget#project_tree::item:selected { background: rgba(@selectionRgb@, 205);
                                           border-left: 2px solid @accent@; }
 QTreeWidget#project_tree::item:selected:!active { background: rgba(@selectionRgb@, 145); }
 QListWidget#diagnostics { background: transparent; border: none; }
+QListWidget#diagnostics::item { padding: 3px 6px; border-radius: 3px; }
+QListWidget#diagnostics::item:hover { background: rgba(@accentRgb@, 22); }
+QListWidget#diagnostics::item:selected { background: rgba(@selectionRgb@, 190); }
 QListWidget#diagnostics::viewport { background: transparent; }
 
 /* The buttons. */
@@ -339,7 +344,7 @@ QWidget#blank_page { background: transparent; }
 
 /* The welcome page. It stands where the documents stand while none is open. */
 QWidget#welcome { background: transparent; }
-QLabel#welcome_title { font-size: 18pt; font-weight: 600; color: @text@; }
+QLabel#welcome_title { font-size: 15pt; font-weight: 600; color: @text@; }
 QLabel#section { font-size: 8pt; font-weight: 600; color: @accent@;
                  padding-top: 2px; }
 QLabel#muted { color: @textDim@; }
@@ -367,14 +372,14 @@ QCheckBox::indicator:hover { border-color: @accent@; }
 QCheckBox::indicator:checked { background: @accent@; border-color: @accent@; }
 
 /* The scrollbars. */
-QScrollBar:vertical { background: @background@; width: 11px; margin: 0; }
-QScrollBar:handle:vertical { background: @lineStrong@; border-radius: 5px;
-                              min-height: 28px; }
-QScrollBar:handle:vertical:hover { background: @accent@; }
-QScrollBar:horizontal { background: @background@; height: 11px; margin: 0; }
-QScrollBar::handle:horizontal { background: @lineStrong@; border-radius: 5px;
-                                min-width: 28px; }
-QScrollBar::handle:horizontal:hover { background: @accent@; }
+QScrollBar:vertical { background: transparent; width: 11px; margin: 0; }
+QScrollBar::handle:vertical { background: rgba(@accentRgb@, 70); border-radius: 3px;
+                              min-height: 28px; margin: 2px 2px 2px 3px; }
+QScrollBar::handle:vertical:hover { background: rgba(@accentRgb@, 130); }
+QScrollBar:horizontal { background: transparent; height: 11px; margin: 0; }
+QScrollBar::handle:horizontal { background: rgba(@accentRgb@, 70); border-radius: 3px;
+                                min-width: 28px; margin: 3px 2px 2px 2px; }
+QScrollBar::handle:horizontal:hover { background: rgba(@accentRgb@, 130); }
 QScrollBar::add-line, QScrollBar::sub-line { height: 0; width: 0; }
 QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }
 
@@ -385,17 +390,21 @@ QSplitter::handle:vertical { height: 5px; }
 QSplitter::handle:hover { background: rgba(@accentRgb@, 90); }
 
 /* The titles of the sections. */
-QLabel#diagnostics_title { color: @textDim@; padding: 2px 0; }
+QLabel#diagnostics_title { color: @textDim@; font-size: 8.5pt; padding: 2px 6px; }
 
 /* The hints. */
-QToolTip { background: @surface@; color: @text@; border: 1px solid @lineStrong@;
-           padding: 5px 7px; }
-QFrame#intellisense_popup { background: @completionSurface@; border: 1px solid @lineStrong@;
-                            border-radius: 5px; }
+QToolTip { background: @completionSurface@; color: @text@; border: 1px solid @lineStrong@;
+           padding: 5px 8px; }
+QFrame#intellisense_popup, QFrame#parameter_hint {
+    background: @completionSurface@; border: 1px solid @lineStrong@;
+    border-radius: 5px; }
+QFrame#parameter_hint QLabel { background: transparent; color: @text@;
+                               padding: 6px 10px; }
 QListWidget#intellisense_list { background: transparent; border: none;
                                 outline: none; padding: 4px; }
-QListWidget#intellisense_list::item { color: @text@; padding: 5px 8px;
+QListWidget#intellisense_list::item { color: @text@; padding: 4px 8px;
                                       border-radius: 3px; }
+QListWidget#intellisense_list::item:hover { background: rgba(@accentRgb@, 26); }
 QListWidget#intellisense_list::item:selected { background: rgba(@accentRgb@, 54);
                                                color: @text@; }
 
@@ -462,7 +471,6 @@ QFont studioUiFont(int pointSize) {
     QFont font;
 
     font.setFamilies({
-        QStringLiteral("Inter"),
         QStringLiteral("Noto Sans"),
         QStringLiteral("DejaVu Sans"),
         QStringLiteral("sans-serif")

@@ -7,6 +7,7 @@
 #include "pebble_c/type_checker.h"
 
 #include <errno.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -135,6 +136,25 @@ static void print_ast(const PebbleCNode *node, size_t depth) {
 }
 
 static char *quote_argument(const char *value) {
+#if defined(_WIN32)
+    const size_t length = strlen(value);
+    char *result;
+
+    if (length > SIZE_MAX - 3U) {
+        return NULL;
+    }
+
+    result = malloc(length + 3U);
+    if (result == NULL) {
+        return NULL;
+    }
+
+    result[0] = '"';
+    memcpy(result + 1U, value, length);
+    result[length + 1U] = '"';
+    result[length + 2U] = '\0';
+    return result;
+#else
     size_t length = strlen(value);
     size_t extra = 0U;
     size_t i;
@@ -173,10 +193,16 @@ static char *quote_argument(const char *value) {
     result[position++] = '\'';
     result[position] = '\0';
     return result;
+#endif
 }
 
-static char *output_path(const char *filename, const char *suffix) {
+static char *output_path(const char *filename, const char *suffix,
+                         const char *build_directory) {
     const char *base = strrchr(filename, '/');
+    const char *backslash = strrchr(filename, '\\');
+    if (backslash != NULL && (base == NULL || backslash > base)) {
+        base = backslash;
+    }
     const char *dot;
     size_t stem_length;
     size_t suffix_length = strlen(suffix);
@@ -185,6 +211,8 @@ static char *output_path(const char *filename, const char *suffix) {
     char tag[17];
     int tag_length;
     size_t path_length;
+    size_t position = 0U;
+    size_t prefix_length;
     char *path;
 
     base = base != NULL ? base + 1 : filename;
@@ -205,25 +233,28 @@ static char *output_path(const char *filename, const char *suffix) {
         return NULL;
     }
 
-    if (stem_length > SIZE_MAX - suffix_length - 24U) {
+    prefix_length = strlen(build_directory);
+    if (stem_length > SIZE_MAX - suffix_length - 24U ||
+        prefix_length > SIZE_MAX - stem_length - suffix_length - 24U) {
         return NULL;
     }
 
-    path_length = 6U + stem_length + 1U + 16U + suffix_length + 1U;
+    path_length = prefix_length + 1U + stem_length + 1U + 16U +
+        suffix_length + 1U;
     path = malloc(path_length);
     if (path == NULL) {
         return NULL;
     }
 
-    (void)memcpy(path, "build/", 6U);
-    (void)memcpy(path + 6U, base, stem_length);
-    path[6U + stem_length] = '-';
-    (void)memcpy(path + 7U + stem_length, tag, 16U);
-    (void)memcpy(
-        path + 23U + stem_length,
-        suffix,
-        suffix_length + 1U
-    );
+    (void)memcpy(path, build_directory, prefix_length);
+    position += prefix_length;
+    path[position++] = '/';
+    (void)memcpy(path + position, base, stem_length);
+    position += stem_length;
+    path[position++] = '-';
+    (void)memcpy(path + position, tag, 16U);
+    position += 16U;
+    (void)memcpy(path + position, suffix, suffix_length + 1U);
 
     return path;
 }
@@ -283,6 +314,162 @@ static int compile_c(const char *source_path, const char *executable_path) {
         return 0;
     }
     return 1;
+}
+
+static char *cache_home_copy(void) {
+    const char *xdg_cache_home = getenv("XDG_CACHE_HOME");
+    const char *home = getenv("HOME");
+    size_t length;
+    char *path;
+
+    if (xdg_cache_home != NULL && xdg_cache_home[0] != '\0') {
+        return copy_text(xdg_cache_home);
+    }
+
+    if (home == NULL || home[0] == '\0') {
+        return copy_text(".");
+    }
+
+    length = strlen(home) + strlen("/.cache") + 1U;
+    path = malloc(length);
+    if (path == NULL) {
+        return NULL;
+    }
+    (void)snprintf(path, length, "%s/.cache", home);
+    return path;
+}
+
+static int source_directory_absolute(const char *filename, char *out,
+                                     size_t size) {
+    const char *separator = strrchr(filename, '/');
+    const char *backslash = strrchr(filename, '\\');
+    size_t directory_length;
+    char cwd[4096];
+    size_t cwd_length;
+
+    if (backslash != NULL && (separator == NULL || backslash > separator)) {
+        separator = backslash;
+    }
+
+    if (separator == NULL) {
+        if (getcwd(out, size) == NULL) {
+            return -1;
+        }
+        return 0;
+    }
+
+    directory_length = (size_t)(separator - filename);
+    if (directory_length >= size) {
+        directory_length = size - 1U;
+    }
+    memcpy(out, filename, directory_length);
+    out[directory_length] = '\0';
+
+    if (out[0] == '/') {
+        return 0;
+    }
+
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        return -1;
+    }
+
+    cwd_length = strlen(cwd);
+    if (cwd_length + 1U + directory_length + 1U > size) {
+        return -1;
+    }
+
+    memmove(out + cwd_length + 1U, out, directory_length + 1U);
+    memcpy(out, cwd, cwd_length);
+    out[cwd_length] = '/';
+    return 0;
+}
+
+static int resolve_build_directory(const char *filename, char *out,
+                                   size_t size) {
+    char source_directory[4096];
+    char preferred[4200];
+    char *cache_home = NULL;
+    char fallback[4200];
+    uint64_t hash = UINT64_C(14695981039346656037);
+    char tag[17];
+    int tag_length;
+    size_t index;
+    int saved_errno = 0;
+
+    if (source_directory_absolute(filename, source_directory,
+                                  sizeof(source_directory)) != 0) {
+        return -1;
+    }
+
+    if (snprintf(preferred, sizeof(preferred), "%s/build",
+                 source_directory) >= (int)sizeof(preferred)) {
+        return -1;
+    }
+
+    if (mkdir(preferred, 0777) == 0) {
+        goto copy_preferred;
+    }
+    saved_errno = errno;
+    if (saved_errno != EEXIST) {
+        struct stat info;
+
+        if (stat(preferred, &info) != 0 || !S_ISDIR(info.st_mode)) {
+            goto fallback;
+        }
+    }
+
+copy_preferred:
+    if (strlen(preferred) + 1U > size) {
+        return -1;
+    }
+    (void)memcpy(out, preferred, strlen(preferred) + 1U);
+    return 0;
+
+fallback:
+    cache_home = cache_home_copy();
+    if (cache_home == NULL) {
+        return -1;
+    }
+
+    for (index = 0U; source_directory[index] != '\0'; ++index) {
+        hash ^= (uint64_t)(unsigned char)source_directory[index];
+        hash *= UINT64_C(1099511628211);
+    }
+
+    tag_length = snprintf(tag, sizeof(tag), "%016" PRIx64, hash);
+    if (tag_length != 16) {
+        free(cache_home);
+        return -1;
+    }
+
+    if (snprintf(fallback, sizeof(fallback), "%s/pebble/build/%s",
+                 cache_home, tag) >= (int)sizeof(fallback)) {
+        free(cache_home);
+        return -1;
+    }
+
+    free(cache_home);
+
+    if (mkdir(fallback, 0777) != 0) {
+        saved_errno = errno;
+        if (saved_errno != EEXIST) {
+            return -1;
+        }
+    }
+
+    {
+        struct stat info;
+
+        if (stat(fallback, &info) != 0 || !S_ISDIR(info.st_mode)) {
+            return -1;
+        }
+    }
+
+    if (strlen(fallback) + 1U > size) {
+        return -1;
+    }
+    (void)memcpy(out, fallback, strlen(fallback) + 1U);
+    return 0;
 }
 
 static int compile_program(const char *command, const char *filename,
@@ -355,6 +542,10 @@ static int compile_program(const char *command, const char *filename,
     {
         char directory[1024];
         const char *separator = strrchr(filename, '/');
+        const char *backslash = strrchr(filename, '\\');
+        if (backslash != NULL && (separator == NULL || backslash > separator)) {
+            separator = backslash;
+        }
         size_t directory_length;
         size_t index;
 
@@ -399,14 +590,26 @@ static int compile_program(const char *command, const char *filename,
         goto cleanup;
     }
 
-    if (mkdir("build", 0777) != 0 && errno != EEXIST) {
-        (void)fprintf(stderr, "error: cannot create build directory: %s\n",
-            strerror(errno));
+    char build_directory[4096];
+    char current_directory[4096];
+
+    if (resolve_build_directory(filename, build_directory,
+                                sizeof(build_directory)) != 0) {
+        if (getcwd(current_directory, sizeof(current_directory)) == NULL) {
+            current_directory[0] = '\0';
+        }
+        (void)fprintf(stderr,
+            "error: cannot create build directory for '%s': %s (working directory: %s)\n",
+            filename, strerror(errno), current_directory);
         goto cleanup;
     }
 
-    generated_path = output_path(filename, ".generated.c");
-    executable_path = output_path(filename, "");
+    generated_path = output_path(filename, ".generated.c", build_directory);
+#if defined(_WIN32)
+    executable_path = output_path(filename, ".exe", build_directory);
+#else
+    executable_path = output_path(filename, "", build_directory);
+#endif
     if (generated_path == NULL || executable_path == NULL) {
         (void)fprintf(stderr, "error: invalid source filename or out of memory\n");
         goto cleanup;
@@ -457,7 +660,15 @@ static int compile_program(const char *command, const char *filename,
             goto cleanup;
         }
 
+    if (executable_path[0] == '/') {
+        (void)snprintf(relative, path_length + 1U, "%s", executable_path);
+    } else {
+#if defined(_WIN32)
+        (void)snprintf(relative, path_length + 3U, ".\\%s", executable_path);
+#else
         (void)snprintf(relative, path_length + 3U, "./%s", executable_path);
+#endif
+    }
         quoted = quote_argument(relative);
         free(relative);
 

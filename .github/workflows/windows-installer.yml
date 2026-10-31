@@ -1,0 +1,72 @@
+name: Windows build and installer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [native-cpp, main]
+  pull_request:
+    branches: [native-cpp, main]
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install MinGW, Qt, GLFW, and build tools
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-toolchain
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-qt6-base
+            mingw-w64-ucrt-x86_64-qt6-tools
+            mingw-w64-ucrt-x86_64-glfw
+            mingw-w64-ucrt-x86_64-pkgconf
+            zip
+
+      - name: Configure
+        run: |
+          cmake -S . -B build-win -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX='C:/Program Files/Pebble' \
+            -DCMAKE_INSTALL_BINDIR=bin \
+            -DCMAKE_INSTALL_DATADIR=share \
+            -DBUILD_TESTING=OFF
+
+      - name: Build compiler and Studio
+        run: cmake --build build-win --target pebble pebble_native pebble_studio --parallel 2
+
+      - name: Install into staging directory
+        run: |
+          cmake --install build-win --prefix "$PWD/stage"
+          mkdir -p stage/bin
+          # Ensure the runtime GLFW DLL is present for generated OpenGL programs.
+          find /ucrt64/bin -maxdepth 1 -iname '*glfw*.dll' -exec cp -f {} stage/bin/ \;
+          # Deploy Qt and MinGW runtime DLLs beside the Studio executable.
+          windeployqt --release --compiler-runtime --dir stage/bin stage/bin/pebble_studio.exe
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          choco install innosetup --yes --no-progress
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          & $iscc "packaging\Pebble.iss"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: pebble-windows-x64-installer
+          path: packaging/output/Pebble-Setup-0.3.0-x64.exe
+          if-no-files-found: error
