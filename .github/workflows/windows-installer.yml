@@ -28,7 +28,7 @@ jobs:
       - name: Install Qt 6
         shell: pwsh
         run: |
-          python -m aqt install-qt windows desktop 6.7.2 win64_msvc2019_64 -O C:\Qt --modules qttools --verbose
+          python -m aqt install-qt windows desktop 6.7.2 win64_msvc2019_64 -O C:\Qt --modules qttools
           echo "C:\Qt\6.7.2\msvc2019_64\bin" >> $env:GITHUB_PATH
           echo "Qt6_DIR=C:/Qt/6.7.2/msvc2019_64/lib/cmake/Qt6" >> $env:GITHUB_ENV
 
