@@ -149,6 +149,7 @@ add_library(pebble_c_frontend
 target_include_directories(pebble_c_frontend PUBLIC include)
 if(MSVC)
     target_compile_options(pebble_c_frontend PRIVATE /W4 /WX)
+    target_compile_definitions(pebble_c_frontend PRIVATE _CRT_SECURE_NO_WARNINGS)
 else()
     target_compile_options(pebble_c_frontend PRIVATE
         -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
