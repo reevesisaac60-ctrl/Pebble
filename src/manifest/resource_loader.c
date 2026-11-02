@@ -4,6 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#define IS_REG_MODE(m) (((m) & _S_IFMT) == _S_IFREG)
+#else
+#define IS_REG_MODE(m) S_ISREG(m)
+#endif
 
 #define PEBBLE_RESOURCE_MAX_SIZE (1024 * 1024)
 
@@ -52,7 +57,7 @@ PebbleResourceStatus pebble_resource_load_text(const char *root, const char *id,
         out->status = PEBBLE_RESOURCE_MISSING;
         return out->status;
     }
-    if (!S_ISREG(st.st_mode)) {
+    if (!IS_REG_MODE(st.st_mode)) {
         out->status = PEBBLE_RESOURCE_UNSUPPORTED;
         return out->status;
     }
@@ -105,7 +110,7 @@ PebbleResourceStatus pebble_resource_load_binary(const char *root, const char *i
         out->status = PEBBLE_RESOURCE_MISSING;
         return out->status;
     }
-    if (!S_ISREG(st.st_mode)) {
+    if (!IS_REG_MODE(st.st_mode)) {
         out->status = PEBBLE_RESOURCE_UNSUPPORTED;
         return out->status;
     }

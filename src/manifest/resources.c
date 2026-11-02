@@ -1,12 +1,24 @@
 #include "pebble_manifest/resources.h"
-#pragma GCC diagnostic ignored "-Wformat-truncation"
 
+#ifndef _WIN32
+#pragma GCC diagnostic ignored "-Wformat-truncation"
 #include <dirent.h>
+#else
+#include <windows.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#ifdef _WIN32
+#define IS_DIR_MODE(m) (((m) & _S_IFMT) == _S_IFDIR)
+#define IS_REG_MODE(m) (((m) & _S_IFMT) == _S_IFREG)
+#else
+#define IS_DIR_MODE(m) S_ISDIR(m)
+#define IS_REG_MODE(m) S_ISREG(m)
+#endif
 
 static int is_ignored_dir(const char *name) {
     return strcmp(name, ".pebble") == 0 ||
@@ -64,6 +76,34 @@ static void scan_dir(const char *root, const char *prefix, PebbleResourceList *o
     } else {
         snprintf(path, sizeof(path), "%s/%s", root, prefix);
     }
+#ifdef _WIN32
+    char search[8192];
+    snprintf(search, sizeof(search), "%s/*", path);
+    WIN32_FIND_DATAA fd;
+    HANDLE h = FindFirstFileA(search, &fd);
+    if (h == INVALID_HANDLE_VALUE) return;
+    do {
+        if (strcmp(fd.cFileName, ".") == 0 ||
+            strcmp(fd.cFileName, "..") == 0) continue;
+        if (is_ignored_dir(fd.cFileName)) continue;
+        char rel[8192];
+        if (prefix[0] == '\0') {
+            snprintf(rel, sizeof(rel), "%s", fd.cFileName);
+        } else {
+            snprintf(rel, sizeof(rel), "%s/%s", prefix, fd.cFileName);
+        }
+        char full[8192];
+        snprintf(full, sizeof(full), "%s/%s", root, rel);
+        struct _stat st;
+        if (_stat(full, &st) != 0) continue;
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            scan_dir(root, rel, out);
+        } else if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+            append_resource(out, rel, full);
+        }
+    } while (FindNextFileA(h, &fd));
+    FindClose(h);
+#else
     DIR *dir = opendir(path);
     if (dir == NULL) return;
     struct dirent *entry;
@@ -81,13 +121,14 @@ static void scan_dir(const char *root, const char *prefix, PebbleResourceList *o
         snprintf(full, sizeof(full), "%s/%s", root, rel);
         struct stat st;
         if (stat(full, &st) != 0) continue;
-        if (S_ISDIR(st.st_mode)) {
+        if (IS_DIR_MODE(st.st_mode)) {
             scan_dir(root, rel, out);
-        } else if (S_ISREG(st.st_mode)) {
+        } else if (IS_REG_MODE(st.st_mode)) {
             append_resource(out, rel, full);
         }
     }
     closedir(dir);
+#endif
 }
 
 int pebble_resource_scan(const char *root, PebbleResourceList *out) {
