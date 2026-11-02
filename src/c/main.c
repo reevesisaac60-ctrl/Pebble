@@ -7,7 +7,13 @@
 #include "pebble_c/type_checker.h"
 
 #include <errno.h>
+#if defined(_WIN32)
+#include <direct.h>
+#define getcwd _getcwd
+#define mkdir(path, mode) _mkdir(path)
+#else
 #include <unistd.h>
+#endif
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>

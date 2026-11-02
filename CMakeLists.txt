@@ -66,6 +66,9 @@ add_executable(pebble
 )
 target_link_libraries(pebble PRIVATE pebble_frontend pebble_manifest)
 pebble_configure_target(pebble)
+if(MSVC)
+    target_compile_definitions(pebble PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
 
 include(GNUInstallDirs)
 
