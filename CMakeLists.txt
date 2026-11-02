@@ -56,6 +56,9 @@ else()
         -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
     )
 endif()
+if(MSVC)
+    target_compile_definitions(pebble_manifest PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
 
 add_executable(pebble
     src/main.cpp
@@ -153,6 +156,9 @@ add_executable(pebble_native
     src/c/cli.c
 )
 target_link_libraries(pebble_native PRIVATE pebble_c_frontend pebble_manifest)
+if(MSVC)
+    target_compile_definitions(pebble_native PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
 if(MSVC)
     target_compile_options(pebble_native PRIVATE /W4 /WX)
 else()
