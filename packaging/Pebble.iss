@@ -1,5 +1,5 @@
 #define AppName "Pebble"
-#define AppVersion "0.3.0"
+#define AppVersion "0.3.1"
 #define AppPublisher "Pebble project"
 #define AppExeName "pebble_studio.exe"
 
@@ -11,7 +11,7 @@ AppPublisher={#AppPublisher}
 DefaultDirName={autopf}\Pebble
 DefaultGroupName=Pebble
 OutputDir=output
-OutputBaseFilename=Pebble-Setup-{#AppVersion}-x64
+OutputBaseFilename=Pebble-{#AppVersion}-Windows-x64-Setup
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 PrivilegesRequired=admin

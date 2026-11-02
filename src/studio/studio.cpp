@@ -1122,8 +1122,6 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
 
 namespace {
 
-// Completion rows: name, kind and signature in aligned columns, using the
-// editor's own syntax colours instead of one run of plain text.
 class CompletionDelegate : public QStyledItemDelegate {
 public:
     using QStyledItemDelegate::QStyledItemDelegate;
@@ -1165,7 +1163,7 @@ public:
     }
 };
 
-}  // namespace
+}
 
 CodeEditor::CodeEditor(QWidget *parent)
     : QPlainTextEdit(parent) {
@@ -1538,7 +1536,6 @@ void CodeEditor::paintEvent(QPaintEvent *event) {
     painter.drawText(caret.left(), caret.top() + fontMetrics().ascent(), ghostSuffix);
 }
 
-// Spaces and tabs stay visible, but as quiet marks that never compete with code.
 void CodeEditor::paintWhitespaceMarkers() {
     QPainter painter(viewport());
     painter.setClipRect(viewport()->rect());
@@ -3035,6 +3032,8 @@ MainWindow::MainWindow(
     centralLayout->addWidget(activityBarWidget);
     centralLayout->addWidget(mainSplitter, 1);
     setCentralWidget(central);
+
+    menuBar()->setNativeMenuBar(false);
 
     auto *fileMenu = menuBar()->addMenu("&File");
     fileMenu->addAction("New File", this, &MainWindow::newFile);

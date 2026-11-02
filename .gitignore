@@ -17,7 +17,8 @@ src/c/package.c.log-parity-20261021-151849.bak
 src/c/codegen.c.log-parity-20261021-151849.bak
 tests/test_packages_c.c.log-parity-20261021-151849.bak
 # Local packaging outputs
-/pebble-0.3.0.tar.gz
+/pebble-*.tar.gz
+/package-output/
 /pebble-*.pkg.tar.*
 /build-win/
 /stage/

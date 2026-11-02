@@ -90,7 +90,6 @@ std::string readSource(const std::string& filename) {
 
 std::string shellQuote(const std::string& value) {
 #if defined(_WIN32)
-    // Windows command shells use double quotes, not POSIX single quotes.
     std::string result = "\"";
 
     for (const char character : value) {

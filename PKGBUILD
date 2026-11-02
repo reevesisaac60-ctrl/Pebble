@@ -1,7 +1,7 @@
 # Maintainer: Pebble project
 pkgname=pebble
-pkgver=0.3.0
-pkgrel=2
+pkgver=0.3.1
+pkgrel=1
 pkgdesc="Pebble language, compiler, and native Qt Studio"
 arch=('x86_64')
 url="https://github.com/reevesisaac60-ctrl/Pebble"
@@ -15,11 +15,10 @@ depends=(
 makedepends=(
     'cmake>=3.25'
     'ninja'
-    'python'
     'qt6-tools'
 )
 source=("$pkgname-$pkgver.tar.gz")
-sha256sums=('SKIP')
+sha256sums=('b88eaed87fbb2ab96da91f4c749f92e676ff8dfe20c73a8cfc2a9dfc573074a8')
 
 build() {
     cmake -S "$srcdir" -B "$srcdir/build-root" -G Ninja \
@@ -28,8 +27,7 @@ build() {
         -DCMAKE_INSTALL_BINDIR=bin \
         -DCMAKE_INSTALL_LIBDIR=lib \
         -DCMAKE_INSTALL_DATADIR=share \
-        -DPEBBLE_WARNINGS_AS_ERRORS=ON \
-        -DBUILD_TESTING=OFF
+        -DPEBBLE_WARNINGS_AS_ERRORS=ON
 
     cmake --build "$srcdir/build-root" \
         --target pebble pebble_native pebble_studio \

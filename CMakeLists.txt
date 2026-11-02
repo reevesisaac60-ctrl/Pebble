@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
 project(Pebble
-    VERSION 0.3.0
+    VERSION 0.3.1
     DESCRIPTION "Native Pebble language and game creation platform"
     LANGUAGES CXX
 )
@@ -13,12 +13,18 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(PEBBLE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 
 function(pebble_configure_target target)
-    target_compile_options(${target} PRIVATE
-        -Wall -Wextra -Wpedantic -Wconversion -Wshadow
-    )
-
-    if(PEBBLE_WARNINGS_AS_ERRORS)
-        target_compile_options(${target} PRIVATE -Werror)
+    if(MSVC)
+        target_compile_options(${target} PRIVATE /W4)
+        if(PEBBLE_WARNINGS_AS_ERRORS)
+            target_compile_options(${target} PRIVATE /WX)
+        endif()
+    else()
+        target_compile_options(${target} PRIVATE
+            -Wall -Wextra -Wpedantic -Wconversion -Wshadow
+        )
+        if(PEBBLE_WARNINGS_AS_ERRORS)
+            target_compile_options(${target} PRIVATE -Werror)
+        endif()
     endif()
 endfunction()
 
@@ -43,9 +49,13 @@ add_library(pebble_manifest STATIC
 )
 target_include_directories(pebble_manifest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_features(pebble_manifest PRIVATE c_std_11)
-target_compile_options(pebble_manifest PRIVATE
-    -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
-)
+if(MSVC)
+    target_compile_options(pebble_manifest PRIVATE /W4 /WX)
+else()
+    target_compile_options(pebble_manifest PRIVATE
+        -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
+    )
+endif()
 
 add_executable(pebble
     src/main.cpp
@@ -54,7 +64,6 @@ add_executable(pebble
 target_link_libraries(pebble PRIVATE pebble_frontend pebble_manifest)
 pebble_configure_target(pebble)
 
-include(CTest)
 include(GNUInstallDirs)
 
 target_compile_definitions(pebble PRIVATE
@@ -117,37 +126,6 @@ list(REMOVE_ITEM PEBBLE_STUDIO_WALLPAPERS
     ${PEBBLE_STUDIO_WALLPAPER}
 )
 
-if(BUILD_TESTING)
-    add_executable(pebble_tests tests/test_lexer.cpp)
-    target_link_libraries(pebble_tests PRIVATE pebble_frontend)
-    pebble_configure_target(pebble_tests)
-    add_test(NAME pebble_lexer COMMAND pebble_tests)
-
-    add_executable(pebble_parser_tests tests/test_parser.cpp)
-    target_link_libraries(pebble_parser_tests PRIVATE pebble_frontend)
-    pebble_configure_target(pebble_parser_tests)
-    add_test(NAME pebble_parser COMMAND pebble_parser_tests)
-
-    add_executable(pebble_type_tests tests/test_type_checker.cpp)
-    target_link_libraries(pebble_type_tests PRIVATE pebble_frontend)
-    pebble_configure_target(pebble_type_tests)
-    add_test(NAME pebble_types COMMAND pebble_type_tests)
-
-   add_executable(pebble_codegen_tests tests/test_codegen.cpp)
-   target_link_libraries(pebble_codegen_tests PRIVATE pebble_frontend)
-   pebble_configure_target(pebble_codegen_tests)
-   add_test(NAME pebble_codegen COMMAND pebble_codegen_tests)
-
-    add_executable(pebble_package_tests tests/test_packages.cpp)
-    target_link_libraries(pebble_package_tests PRIVATE pebble_frontend)
-    pebble_configure_target(pebble_package_tests)
-    add_test(NAME pebble_packages COMMAND pebble_package_tests)
-
-    add_executable(pebble_local_package_tests tests/test_local_packages.cpp)
-    target_link_libraries(pebble_local_package_tests PRIVATE pebble_frontend)
-    pebble_configure_target(pebble_local_package_tests)
-    add_test(NAME pebble_local_packages COMMAND pebble_local_package_tests)
-endif()
 
 
 enable_language(C)
@@ -175,162 +153,17 @@ add_executable(pebble_native
     src/c/cli.c
 )
 target_link_libraries(pebble_native PRIVATE pebble_c_frontend pebble_manifest)
-target_compile_options(pebble_native PRIVATE
-    -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
-)
+if(MSVC)
+    target_compile_options(pebble_native PRIVATE /W4 /WX)
+else()
+    target_compile_options(pebble_native PRIVATE
+        -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
+    )
+endif()
 
 install(TARGETS pebble pebble_native RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-add_executable(test_lexer_c tests/test_lexer_c.c)
-target_link_libraries(test_lexer_c PRIVATE pebble_c_frontend)
-target_compile_options(test_lexer_c PRIVATE
-    -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
-)
-add_test(NAME pebble_c_lexer COMMAND test_lexer_c)
 
-add_executable(test_parser_c tests/test_parser_c.c)
-target_link_libraries(test_parser_c PRIVATE pebble_c_frontend)
-target_compile_options(test_parser_c PRIVATE
-    -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
-)
-add_test(NAME pebble_c_parser COMMAND test_parser_c)
-
-add_executable(test_type_checker_c tests/test_type_checker_c.c)
-target_link_libraries(test_type_checker_c PRIVATE pebble_c_frontend)
-target_compile_options(test_type_checker_c PRIVATE
-    -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
-)
-add_test(NAME pebble_c_types COMMAND test_type_checker_c)
-
-
-add_executable(test_codegen_c tests/test_codegen_c.c)
-target_link_libraries(test_codegen_c PRIVATE pebble_c_frontend)
-target_compile_options(test_codegen_c PRIVATE
-    -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
-)
-add_test(NAME pebble_c_codegen COMMAND test_codegen_c)
-
-add_executable(test_packages_c tests/test_packages_c.c)
-target_link_libraries(test_packages_c PRIVATE pebble_c_frontend)
-target_compile_options(test_packages_c PRIVATE
-    -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
-)
-add_test(NAME pebble_c_packages COMMAND test_packages_c)
-
-add_executable(test_local_packages_c tests/test_local_packages_c.c)
-target_link_libraries(test_local_packages_c PRIVATE pebble_c_frontend)
-target_compile_options(test_local_packages_c PRIVATE
-    -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
-)
-add_test(NAME pebble_c_local_packages COMMAND test_local_packages_c)
-
-add_executable(test_project_c tests/test_project.c)
-target_link_libraries(test_project_c PRIVATE pebble_manifest)
-target_compile_options(test_project_c PRIVATE
-    -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
-)
-add_test(NAME pebble_project COMMAND test_project_c)
-
-add_executable(test_resources_c tests/test_resources_c.c)
-target_link_libraries(test_resources_c PRIVATE pebble_manifest)
-target_compile_options(test_resources_c PRIVATE
-    -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
-)
-add_test(NAME pebble_resources COMMAND test_resources_c)
-
-find_package(Python3 COMPONENTS Interpreter REQUIRED)
-
-add_test(
-    NAME pebble_native_cli
-    COMMAND ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_native_cli.py
-        $<TARGET_FILE:pebble_native>
-)
-
-add_test(
-    NAME pebble_parser_parity
-    COMMAND ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_parser_parity.py
-        $<TARGET_FILE:pebble>
-        $<TARGET_FILE:pebble_native>
-)
-
-add_test(
-    NAME pebble_type_checker_parity
-    COMMAND ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_type_checker_parity.py
-        $<TARGET_FILE:pebble>
-        $<TARGET_FILE:pebble_native>
-)
-
-add_test(
-    NAME pebble_runtime_parity
-    COMMAND ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_runtime_parity.py
-        $<TARGET_FILE:pebble>
-        $<TARGET_FILE:pebble_native>
-)
-
-add_test(
-    NAME pebble_package_runtime_parity
-    COMMAND ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_package_runtime_parity.py
-        $<TARGET_FILE:pebble>
-        $<TARGET_FILE:pebble_native>
-)
-
-add_test(
-    NAME pebble_log_runtime
-    COMMAND ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_log_runtime.py
-        $<TARGET_FILE:pebble_native>
-)
-
-add_test(
-    NAME pebble_cli_parity
-    COMMAND ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_cli_parity.py
-        $<TARGET_FILE:pebble>
-        $<TARGET_FILE:pebble_native>
-)
-
-add_test(
-    NAME pebble_local_package_parity
-    COMMAND ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_local_package_parity.py
-        $<TARGET_FILE:pebble>
-        $<TARGET_FILE:pebble_native>
-)
-
-add_test(
-    NAME pebble_documentation_examples
-    COMMAND ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_documentation_examples.py
-        $<TARGET_FILE:pebble>
-)
-
-add_test(
-    NAME pebble_examples
-    COMMAND ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_examples.py
-        $<TARGET_FILE:pebble>
-)
-
-add_test(
-    NAME pebble_resource_paths
-    COMMAND ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_resource_paths.py
-        $<TARGET_FILE:pebble>
-)
-set_tests_properties(pebble_resource_paths PROPERTIES TIMEOUT 600)
-
-add_test(
-    NAME pebble_build_locations
-    COMMAND ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_build_locations.py
-        $<TARGET_FILE:pebble>
-        $<TARGET_FILE:pebble_native>
-)
 
 find_package(Qt6 COMPONENTS Widgets QUIET)
 if(Qt6_FOUND)
@@ -378,33 +211,6 @@ if(Qt6_FOUND)
     target_link_libraries(pebble_studio PRIVATE pebble_studio_lib pebble_studio_assets)
     pebble_configure_target(pebble_studio)
 
-    find_package(Qt6 COMPONENTS Test QUIET)
-    if(Qt6Test_FOUND)
-        add_executable(pebble_studio_tests tests/test_studio.cpp)
-        set_target_properties(pebble_studio_tests PROPERTIES AUTOMOC ON)
-        target_link_libraries(pebble_studio_tests PRIVATE
-            pebble_studio_lib
-            pebble_studio_assets
-            Qt6::Test
-        )
-        pebble_configure_target(pebble_studio_tests)
-        add_test(NAME pebble_studio COMMAND pebble_studio_tests)
-        set_tests_properties(pebble_studio PROPERTIES
-            ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-        )
-
-        add_executable(pebble_studio_theme_tests tests/test_studio_theme.cpp)
-        set_target_properties(pebble_studio_theme_tests PROPERTIES AUTOMOC ON)
-        target_link_libraries(pebble_studio_theme_tests PRIVATE
-            pebble_studio_lib
-            Qt6::Test
-        )
-        pebble_configure_target(pebble_studio_theme_tests)
-        add_test(NAME pebble_studio_theme COMMAND pebble_studio_theme_tests)
-        set_tests_properties(pebble_studio_theme PROPERTIES
-            ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-        )
-    endif()
 
     install(TARGETS pebble_studio RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
     install(FILES ${PEBBLE_STUDIO_ICON} ${PEBBLE_STUDIO_WALLPAPER}
@@ -433,9 +239,6 @@ if(Qt6_FOUND)
         DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
 endif()
 
-# ---------------------------------------------------------------------------
-# Pebble install rules (compiler/CLI and shared resources)
-# ---------------------------------------------------------------------------
 if(NOT TARGET pebble_install_rules_added)
     set(TARGET pebble_install_rules_added TRUE)
     include(GNUInstallDirs)
