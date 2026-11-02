@@ -147,9 +147,13 @@ add_library(pebble_c_frontend
     src/c/codegen.c
 )
 target_include_directories(pebble_c_frontend PUBLIC include)
-target_compile_options(pebble_c_frontend PRIVATE
-    -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
-)
+if(MSVC)
+    target_compile_options(pebble_c_frontend PRIVATE /W4 /WX)
+else()
+    target_compile_options(pebble_c_frontend PRIVATE
+        -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror
+    )
+endif()
 
 add_executable(pebble_native
     src/c/main.c
