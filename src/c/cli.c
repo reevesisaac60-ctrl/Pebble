@@ -1,11 +1,19 @@
 #include "cli.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <dirent.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#ifdef _WIN32
+#define S_ISREG(mode) (((mode) & _S_IFMT) == _S_IFREG)
+#endif
 
 static char *copy_string(const char *text)
 {
@@ -665,8 +673,15 @@ int pebble_cli_package(const char *root)
     PebbleManifest *manifest = NULL;
     char *distribution = NULL;
     char *manifest_copy = NULL;
+#ifdef _WIN32
+    HANDLE directory = INVALID_HANDLE_VALUE;
+    WIN32_FIND_DATAA find_data;
+    int have_entry = 0;
+    char *search_pattern = NULL;
+#else
     DIR *directory = NULL;
     struct dirent *entry = NULL;
+#endif
     size_t copied = 0U;
     int result = 1;
 
@@ -720,6 +735,57 @@ int pebble_cli_package(const char *root)
         goto cleanup;
     }
 
+#ifdef _WIN32
+    search_pattern = join_path(root, "*");
+    if (search_pattern == NULL) {
+        (void)fprintf(stderr, "error: out of memory\n");
+        goto cleanup;
+    }
+    directory = FindFirstFileA(search_pattern, &find_data);
+    free(search_pattern);
+    search_pattern = NULL;
+    if (directory == INVALID_HANDLE_VALUE) {
+        const DWORD find_error = GetLastError();
+        if (find_error != ERROR_FILE_NOT_FOUND) {
+            (void)fprintf(stderr, "error: cannot read directory '%s'\n", root);
+            goto cleanup;
+        }
+    } else {
+        have_entry = 1;
+        while (have_entry) {
+                const char *name = find_data.cFileName;
+                const size_t length = strlen(name);
+                struct stat information;
+
+                if (length >= 5U && strcmp(name + length - 4U, ".peb") == 0) {
+                    char *source = join_path(root, name);
+                    char *target = join_path(distribution, name);
+
+                    if (source != NULL && target != NULL &&
+                        stat(source, &information) == 0 &&
+                        S_ISREG(information.st_mode) &&
+                        copy_file(source, target)) {
+                        copied++;
+                    }
+
+                    free(source);
+                    free(target);
+                }
+
+                have_entry = FindNextFileA(directory, &find_data);
+            }
+
+            if (GetLastError() != ERROR_NO_MORE_FILES) {
+                (void)fprintf(stderr, "error: cannot read directory '%s'\n", root);
+                (void)FindClose(directory);
+                directory = INVALID_HANDLE_VALUE;
+                goto cleanup;
+            }
+
+            (void)FindClose(directory);
+            directory = INVALID_HANDLE_VALUE;
+        }
+#else
     directory = opendir(root);
 
     if (directory != NULL) {
@@ -750,15 +816,23 @@ int pebble_cli_package(const char *root)
         (void)closedir(directory);
         directory = NULL;
     }
+#endif
 
     (void)printf("Packaged %s %s with %zu source file(s) into %s\n",
                  manifest->name, manifest->version, copied, distribution);
     result = 0;
 
 cleanup:
+#ifdef _WIN32
+    if (directory != INVALID_HANDLE_VALUE) {
+        (void)FindClose(directory);
+    }
+    free(search_pattern);
+#else
     if (directory != NULL) {
         (void)closedir(directory);
     }
+#endif
 
     pebble_manifest_diagnostics_destroy(&diagnostics);
     pebble_manifest_destroy(manifest);
