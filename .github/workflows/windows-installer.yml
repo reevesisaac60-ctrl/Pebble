@@ -31,7 +31,19 @@ jobs:
           python -m aqt list-qt windows desktop --modules 6.7.2 win64_msvc2019_64
           echo "C:\Qt\6.7.2\msvc2019_64\bin" >> $env:GITHUB_PATH
           echo "Qt6_DIR=C:/Qt/6.7.2/msvc2019_64/lib/cmake/Qt6" >> $env:GITHUB_ENV
-
+      
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+          
+      - name: Check Visual Studio
+        shell: pwsh
+        run: |
+          Get-Command cl.exe -ErrorAction SilentlyContinue
+          Get-ChildItem "C:\Program Files\Microsoft Visual Studio\2022" -ErrorAction SilentlyContinue
+          cmake --help
+    
       - name: Configure
         shell: pwsh
         run: |
