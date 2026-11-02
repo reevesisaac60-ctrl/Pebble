@@ -9,8 +9,20 @@
 #include <errno.h>
 #if defined(_WIN32)
 #include <direct.h>
-#define getcwd _getcwd
+#include <limits.h>
+#include <sys/stat.h>
+static char *pebble_getcwd(char *buffer, size_t size) {
+    if (size == 0 || size > INT_MAX) {
+        errno = ERANGE;
+        return NULL;
+    }
+    return _getcwd(buffer, (int)size);
+}
+#define getcwd(buffer, size) pebble_getcwd((buffer), (size))
 #define mkdir(path, mode) _mkdir(path)
+#ifndef S_ISDIR
+#define S_ISDIR(mode) (((mode) & _S_IFMT) == _S_IFDIR)
+#endif
 #else
 #include <unistd.h>
 #endif
