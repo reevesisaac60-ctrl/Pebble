@@ -31,9 +31,33 @@ Both compiler frontends support the same language and package-management workflo
 
 ## Installation
 
+Prebuilt installers are available for Windows x64 and Arch Linux x86_64.
+
+### Arch Linux
+
+<sup>Arch Linux · x86_64</sup>
+
+**[Download Pebble v0.3.1 for Arch Linux](https://github.com/reevesisaac60-ctrl/Pebble/releases/download/v0.3.1/pebble-0.3.1-1-x86_64.pkg.tar.zst)**
+
+Install using:
+
+```bash
+curl -LO https://github.com/reevesisaac60-ctrl/Pebble/releases/download/v0.3.1/pebble-0.3.1-1-x86_64.pkg.tar.zst
+sudo pacman -U pebble-0.3.1-1-x86_64.pkg.tar.zst
+```
+
+The package includes:
+
+- `pebble` compiler
+- `pebble_native` compiler
+- `pebble_studio` IDE
+- Studio desktop entry and application icons
+- Example programs and bundled resources
+- Documentation and Studio assets
+
 ### Windows
 
-Pebble provides a Windows x64 installer.
+<sup>Windows · x64</sup>
 
 **[Download Pebble v0.3.1 for Windows](https://github.com/reevesisaac60-ctrl/Pebble/releases/download/v0.3.1/Pebble-0.3.1-Windows-x64-Setup.exe)**
 
@@ -47,17 +71,11 @@ Install the MSYS2 UCRT64 toolchain and GLFW, and ensure the UCRT64 `bin` directo
 
 Pebble relies on the host system's native compiler and development libraries when building programs. The installer does not bundle the complete development toolchain.
 
-### Arch Linux
-
-An Arch Linux package is being prepared for v0.3.1.
-
-Check the [GitHub Releases page](https://github.com/reevesisaac60-ctrl/Pebble/releases) for package availability.
-
 ### Other Linux distributions
 
 Building from source requires the appropriate C/C++ compiler, CMake, Ninja, Qt 6 development libraries, and the required graphics dependencies.
 
-Platform-specific packaging and installation instructions will be expanded as support develops.
+Prebuilt packages are currently provided for Arch Linux x86_64. Installation and packaging instructions for other distributions may vary.
 
 ## Command-line interface
 
@@ -137,6 +155,14 @@ It provides an integrated environment for developing Pebble applications, bringi
 
 Studio is designed to make working with Pebble projects easier without requiring a separate editor.
 
+## OpenGL
+
+Pebble includes OpenGL functionality for graphics programming.
+
+The repository provides examples demonstrating graphics applications, shader usage, and geometry data.
+
+Explore `examples/opengl/` for the included OpenGL programs and resources.
+
 ## Building from source
 
 Clone the repository:
@@ -163,7 +189,11 @@ cmake -S . -B build -G Ninja \
 cmake --build build --parallel
 ```
 
-The project includes the `pebble`, `pebble_native`, and `pebble_studio` build targets.
+The project includes the following build targets:
+
+- `pebble`
+- `pebble_native`
+- `pebble_studio`
 
 Platform-specific dependencies and packaging requirements may vary.
 
@@ -189,5 +219,7 @@ See the [`LICENSE`](LICENSE) file for licensing information.
 
 - [GitHub repository](https://github.com/reevesisaac60-ctrl/Pebble)
 - [Latest release](https://github.com/reevesisaac60-ctrl/Pebble/releases/latest)
-- [v0.3.1 release notes](https://github.com/reevesisaac60-ctrl/Pebble/releases/tag/v0.3.1)
+- [v0.3.1 release notes and downloads](https://github.com/reevesisaac60-ctrl/Pebble/releases/tag/v0.3.1)
+- [Source code ZIP](https://github.com/reevesisaac60-ctrl/Pebble/archive/refs/tags/v0.3.1.zip)
+- [Source code TAR.GZ](https://github.com/reevesisaac60-ctrl/Pebble/archive/refs/tags/v0.3.1.tar.gz)
 - [Report an issue](https://github.com/reevesisaac60-ctrl/Pebble/issues)
