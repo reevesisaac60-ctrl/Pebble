@@ -46,7 +46,7 @@ static char *pebble_getcwd(char *buffer, size_t size) {
 
 static void usage(const char *name) {
     (void)fprintf(stderr,
-        "Pebble Native C 0.1.0\n"
+        "Pebble Native C " PEBBLE_VERSION_STRING "\n"
         "Usage:\n"
         "  %s lex <file.peb>\n"
         "  %s parse <file.peb>\n"
@@ -278,7 +278,6 @@ static char *output_path(const char *filename, const char *suffix,
     (void)memcpy(path, build_directory, prefix_length);
     position += prefix_length;
     if (prefix_length == 0U || path[prefix_length - 1U] == '/' || path[prefix_length - 1U] == '\\') {
-        /* keep as is */
     } else {
         path[position++] = '/';
     }

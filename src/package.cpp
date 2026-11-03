@@ -272,7 +272,6 @@ const std::vector<Package>& builtinPackages() {
             }
         }
 
-
         ,
         Package{
             "Window",
@@ -284,7 +283,6 @@ const std::vector<Package>& builtinPackages() {
                 PackageFunction{"Close", {}, "Void", "pebble_window_close"}
             }
         }
-
 
         ,
         Package{

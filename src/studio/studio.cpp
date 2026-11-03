@@ -1224,7 +1224,6 @@ CodeEditor::CodeEditor(QWidget *parent)
     setTabStopDistance(fontMetrics().horizontalAdvance(QLatin1Char(' ')) * kIndentWidth);
     document()->setDocumentMargin(12);
 
-
     updateLineNumberAreaWidth();
     highlightCurrentLine();
 
@@ -6339,7 +6338,6 @@ QStringList MainWindow::exampleAssetDirectories() const {
 
     return directories;
 }
-
 
 void MainWindow::openExample() {
     const QStringList paths = examplePaths();

@@ -70,6 +70,8 @@ if(MSVC)
     target_compile_definitions(pebble PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
 
+target_compile_definitions(pebble PRIVATE PEBBLE_VERSION_STRING="${PROJECT_VERSION}")
+
 include(GNUInstallDirs)
 
 target_compile_definitions(pebble PRIVATE
@@ -132,8 +134,6 @@ list(REMOVE_ITEM PEBBLE_STUDIO_WALLPAPERS
     ${PEBBLE_STUDIO_WALLPAPER}
 )
 
-
-
 enable_language(C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -167,6 +167,8 @@ target_link_libraries(pebble_native PRIVATE pebble_c_frontend pebble_manifest)
 if(MSVC)
     target_compile_definitions(pebble_native PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
+
+target_compile_definitions(pebble_native PRIVATE PEBBLE_VERSION_STRING="${PROJECT_VERSION}")
 if(MSVC)
     target_compile_options(pebble_native PRIVATE /W4 /WX)
 else()
@@ -176,8 +178,6 @@ else()
 endif()
 
 install(TARGETS pebble pebble_native RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-
 
 find_package(Qt6 COMPONENTS Widgets QUIET)
 if(Qt6_FOUND)
@@ -225,7 +225,6 @@ if(Qt6_FOUND)
     target_link_libraries(pebble_studio PRIVATE pebble_studio_lib pebble_studio_assets)
     pebble_configure_target(pebble_studio)
 
-
     install(TARGETS pebble_studio RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
     install(FILES ${PEBBLE_STUDIO_ICON} ${PEBBLE_STUDIO_WALLPAPER}
         DESTINATION ${CMAKE_INSTALL_DATADIR}/pebble/assets
@@ -256,7 +255,7 @@ endif()
 if(NOT TARGET pebble_install_rules_added)
     set(TARGET pebble_install_rules_added TRUE)
     include(GNUInstallDirs)
-    
+
     install(TARGETS pebble pebble_native
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         OPTIONAL

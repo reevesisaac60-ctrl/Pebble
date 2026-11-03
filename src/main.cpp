@@ -24,7 +24,7 @@ namespace fs = std::filesystem;
 
 void printUsage(const char* executable) {
     std::cerr
-        << "Pebble Native 0.4.0\n"
+        << "Pebble Native " PEBBLE_VERSION_STRING "\n"
         << "Usage:\n"
         << "  " << executable << " lex <file.peb>\n"
         << "  " << executable << " parse <file.peb>\n"
