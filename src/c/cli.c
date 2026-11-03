@@ -1,9 +1,18 @@
 #include "cli.h"
 
 #ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
+#include <direct.h>
+#include <io.h>
 #else
 #include <dirent.h>
+#include <unistd.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +21,15 @@
 #include <sys/types.h>
 
 #ifdef _WIN32
+#ifndef S_ISREG
 #define S_ISREG(mode) (((mode) & _S_IFMT) == _S_IFREG)
+#endif
+#ifndef S_ISDIR
+#define S_ISDIR(mode) (((mode) & _S_IFMT) == _S_IFDIR)
+#endif
+#ifndef mkdir
+#define mkdir(path, mode) _mkdir(path)
+#endif
 #endif
 
 static char *copy_string(const char *text)

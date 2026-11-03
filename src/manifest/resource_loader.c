@@ -4,7 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #ifdef _WIN32
+#ifndef S_ISREG
+#define S_ISREG(m) (((m) & _S_IFMT) == _S_IFREG)
+#endif
 #define IS_REG_MODE(m) (((m) & _S_IFMT) == _S_IFREG)
 #else
 #define IS_REG_MODE(m) S_ISREG(m)

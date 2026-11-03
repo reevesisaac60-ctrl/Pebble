@@ -8,9 +8,16 @@
 
 #include <errno.h>
 #if defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <direct.h>
 #include <limits.h>
 #include <sys/stat.h>
+#include <io.h>
 static char *pebble_getcwd(char *buffer, size_t size) {
     if (size == 0 || size > INT_MAX) {
         errno = ERANGE;
@@ -18,8 +25,12 @@ static char *pebble_getcwd(char *buffer, size_t size) {
     }
     return _getcwd(buffer, (int)size);
 }
+#ifndef getcwd
 #define getcwd(buffer, size) pebble_getcwd((buffer), (size))
+#endif
+#ifndef mkdir
 #define mkdir(path, mode) _mkdir(path)
+#endif
 #ifndef S_ISDIR
 #define S_ISDIR(mode) (((mode) & _S_IFMT) == _S_IFDIR)
 #endif
@@ -266,7 +277,11 @@ static char *output_path(const char *filename, const char *suffix,
 
     (void)memcpy(path, build_directory, prefix_length);
     position += prefix_length;
-    path[position++] = '/';
+    if (prefix_length == 0U || path[prefix_length - 1U] == '/' || path[prefix_length - 1U] == '\\') {
+        /* keep as is */
+    } else {
+        path[position++] = '/';
+    }
     (void)memcpy(path + position, base, stem_length);
     position += stem_length;
     path[position++] = '-';
@@ -280,12 +295,17 @@ static char *output_path(const char *filename, const char *suffix,
 static int compile_c(const char *source_path, const char *executable_path) {
     const char *configured = getenv("CC");
     const char *compiler = configured != NULL && configured[0] != '\0'
-        ? configured : "cc";
+        ? configured : (getenv("WINDIR") != NULL ? "cl" : "cc");
     char *q_compiler = quote_argument(compiler);
     char *q_source = quote_argument(source_path);
     char *q_executable = quote_argument(executable_path);
+#if defined(_WIN32)
+    const char *format =
+        "%s /std:c11 /W4 /WX %s /Fe:%s";
+#else
     const char *format =
         "%s -std=c11 -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror %s -o %s -lm";
+#endif
     int needed;
     char *command;
     int status;
@@ -335,19 +355,43 @@ static int compile_c(const char *source_path, const char *executable_path) {
 }
 
 static char *cache_home_copy(void) {
+#if defined(_WIN32)
+    const char *local_app_data = getenv("LOCALAPPDATA");
+    const char *app_data = getenv("APPDATA");
+    if (local_app_data != NULL && local_app_data[0] != '\0') {
+        return copy_text(local_app_data);
+    }
+    if (app_data != NULL && app_data[0] != '\0') {
+        return copy_text(app_data);
+    }
+#else
     const char *xdg_cache_home = getenv("XDG_CACHE_HOME");
-    const char *home = getenv("HOME");
-    size_t length;
-    char *path;
-
     if (xdg_cache_home != NULL && xdg_cache_home[0] != '\0') {
         return copy_text(xdg_cache_home);
     }
+#endif
+    const char *home = getenv("HOME");
+#if defined(_WIN32)
+    if (home == NULL || home[0] == '\0') {
+        home = getenv("USERPROFILE");
+    }
+#endif
+    size_t length;
+    char *path;
 
     if (home == NULL || home[0] == '\0') {
         return copy_text(".");
     }
 
+#if defined(_WIN32)
+    length = strlen(home) + strlen("\\AppData\\Local") + 1U;
+    path = malloc(length);
+    if (path == NULL) {
+        return NULL;
+    }
+    (void)snprintf(path, length, "%s\\AppData\\Local", home);
+    return path;
+#else
     length = strlen(home) + strlen("/.cache") + 1U;
     path = malloc(length);
     if (path == NULL) {
@@ -355,6 +399,7 @@ static char *cache_home_copy(void) {
     }
     (void)snprintf(path, length, "%s/.cache", home);
     return path;
+#endif
 }
 
 static int source_directory_absolute(const char *filename, char *out,

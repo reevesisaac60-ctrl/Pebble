@@ -3,8 +3,17 @@
 #ifndef _WIN32
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 #include <dirent.h>
+#include <unistd.h>
 #else
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
+#include <direct.h>
+#include <io.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +22,12 @@
 #include <sys/types.h>
 
 #ifdef _WIN32
+#ifndef S_ISDIR
+#define S_ISDIR(m) (((m) & _S_IFMT) == _S_IFDIR)
+#endif
+#ifndef S_ISREG
+#define S_ISREG(m) (((m) & _S_IFMT) == _S_IFREG)
+#endif
 #define IS_DIR_MODE(m) (((m) & _S_IFMT) == _S_IFDIR)
 #define IS_REG_MODE(m) (((m) & _S_IFMT) == _S_IFREG)
 #else
