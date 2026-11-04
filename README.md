@@ -165,6 +165,14 @@ The project includes the `pebble`, `pebble_native`, and `pebble_studio` build ta
 
 Platform-specific dependencies and packaging requirements may vary.
 
+## OpenGL
+
+Pebble includes OpenGL functionality for graphics programming.
+
+The repository provides examples demonstrating graphics applications, shader usage, and geometry data.
+
+Explore `examples/opengl/` for the included OpenGL programs and resources.
+
 ## Examples
 
 The repository includes example Pebble programs demonstrating language features, built-in packages, and graphics functionality.
