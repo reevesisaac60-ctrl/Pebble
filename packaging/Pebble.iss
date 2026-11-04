@@ -1,5 +1,5 @@
 #define AppName "Pebble"
-#define AppVersion "0.3.1"
+#define AppVersion "0.3.2"
 #define AppPublisher "Pebble project"
 #define AppExeName "pebble_studio.exe"
 

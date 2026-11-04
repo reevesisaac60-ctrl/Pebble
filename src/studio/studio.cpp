@@ -20,8 +20,8 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFileSystemWatcher>
-#include <QFileSystemWatcher>
 #include <QFrame>
+#include <QFileIconProvider>
 #include <QFont>
 #include <QFormLayout>
 #include <QHelpEvent>
@@ -2325,14 +2325,8 @@ WelcomePage::WelcomePage(QWidget *parent)
 
     auto *stripBar = new AnimatedTabBar(strip);
     stripBar->setDocumentMode(true);
-    stripBar->addTab(QStringLiteral("Welcome"));
+    stripBar->addTab(QStringLiteral("Welcome Newbie!"));
     stripBar->setExpanding(false);
-    stripTabBar = stripBar;
-
-    stripCloseButton = new TabCloseButton(stripBar);
-    stripCloseButton->setToolTip(QStringLiteral("Close the welcome tab"));
-    stripBar->setTabButton(0, QTabBar::RightSide, stripCloseButton);
-    connect(stripCloseButton, &QToolButton::clicked, this, &WelcomePage::closeRequested);
 
     stripLayout->addWidget(stripBar);
     stripLayout->addStretch(1);
@@ -2367,7 +2361,7 @@ WelcomePage::WelcomePage(QWidget *parent)
     outer->addLayout(brand);
 
     auto *subtitle = new QLabel(
-        QStringLiteral("A programming environment for Pebble."),
+        QStringLiteral("A programming environment for the sick coding language Pebble!"),
         this
     );
     subtitle->setObjectName(QStringLiteral("muted"));
@@ -2386,9 +2380,10 @@ WelcomePage::WelcomePage(QWidget *parent)
     };
 
     const Step steps[] = {
-        {QStringLiteral("New File"), QStringLiteral("Ctrl+N"), &newFileButtonWidget},
-        {QStringLiteral("Open File…"), QStringLiteral("Ctrl+O"), &openFileButtonWidget},
-        {QStringLiteral("Open Example…"), QString(), &openExampleButtonWidget}
+        {QStringLiteral("New File?"), QStringLiteral("Ctrl+N"), &newFileButtonWidget},
+        {QStringLiteral("Open File?"), QStringLiteral("Ctrl+O"), &openFileButtonWidget},
+        {QStringLiteral("Open Project Folder?"), QString(), &openProjectButtonWidget},
+        {QStringLiteral("Open Example?"), QString(), &openExampleButtonWidget}
     };
 
     for (const Step &step : steps) {
@@ -2408,7 +2403,7 @@ WelcomePage::WelcomePage(QWidget *parent)
 
     outer->addSpacing(26);
 
-    auto *recentHeading = new QLabel(QStringLiteral("Recent Files"), this);
+    auto *recentHeading = new QLabel(QStringLiteral("Recent Files Here Bucko:"), this);
     recentHeading->setObjectName(QStringLiteral("section"));
     outer->addWidget(recentHeading);
     outer->addSpacing(6);
@@ -2426,6 +2421,9 @@ WelcomePage::WelcomePage(QWidget *parent)
     });
     connect(openFileButtonWidget, &QPushButton::clicked, this, [this]() {
         emit openFileRequested();
+    });
+    connect(openProjectButtonWidget, &QPushButton::clicked, this, [this]() {
+        emit openProjectRequested();
     });
     connect(openExampleButtonWidget, &QPushButton::clicked, this, [this]() {
         emit openExampleRequested();
@@ -2462,7 +2460,7 @@ void WelcomePage::setRecentFiles(const QStringList &paths) {
     }
 
     if (paths.isEmpty()) {
-        auto *empty = new QLabel(QStringLiteral("No Recent Files Yet"), recentHost);
+        auto *empty = new QLabel(QStringLiteral("No Recent Files Yet??"), recentHost);
         empty->setObjectName(QStringLiteral("muted"));
         layout->addWidget(empty);
         return;
@@ -2696,6 +2694,36 @@ void FindReplaceBar::keyPressEvent(QKeyEvent *event) {
 
 ProjectTree::ProjectTree(QWidget *parent)
     : QTreeWidget(parent) {
+    setHeaderLabel("Explorer");
+    setIndentation(14);
+    setUniformRowHeights(true);
+    setTextElideMode(Qt::ElideMiddle);
+    setAutoFillBackground(false);
+    setBackgroundRole(QPalette::NoRole);
+    setAttribute(Qt::WA_TranslucentBackground);
+    viewport()->setAutoFillBackground(false);
+    viewport()->setBackgroundRole(QPalette::NoRole);
+    viewport()->setAttribute(Qt::WA_NoSystemBackground);
+    viewport()->setAttribute(Qt::WA_TranslucentBackground);
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    setSelectionMode(QAbstractItemView::SingleSelection);
+    setExpandsOnDoubleClick(true);
+    setItemsExpandable(true);
+    setSortingEnabled(false);
+
+    QPalette treePalette = palette();
+    treePalette.setColor(QPalette::Base, QColor(0, 0, 0, 0));
+    treePalette.setColor(QPalette::Window, QColor(0, 0, 0, 0));
+    setPalette(treePalette);
+    viewport()->setPalette(treePalette);
+}
+
+void ProjectTree::setActiveFile(const QString &path) {
+    m_activeFile = path;
+}
+
+QString ProjectTree::activeFile() const {
+    return m_activeFile;
 }
 
 void ProjectTree::showEvent(QShowEvent *event) {
@@ -2715,6 +2743,13 @@ MainWindow::MainWindow(
     projectManifestWatcher = new QFileSystemWatcher(this);
     connect(projectManifestWatcher, &QFileSystemWatcher::fileChanged, this,
             [this](const QString &) { refreshIntelliSenseProjectPackages(); });
+
+    projectWatcher = new QFileSystemWatcher(this);
+    connect(projectWatcher, &QFileSystemWatcher::directoryChanged, this,
+            [this]() {
+                refreshWatcherPaths();
+                refreshProjectTree();
+            });
     setWindowTitle("Pebble Studio");
 
     QSettings settings(settingsOrganisation, settingsApplication);
@@ -2826,21 +2861,11 @@ MainWindow::MainWindow(
 
     welcome = new WelcomePage(editorStack);
 
-    blankPage = new QWidget(editorStack);
-    blankPage->setObjectName("blank_page");
-    blankPage->setAttribute(Qt::WA_StyledBackground, true);
-
     editorStack->addWidget(tabs);
     editorStack->addWidget(welcome);
-    editorStack->addWidget(blankPage);
     editorLayout->addWidget(editorStack);
 
     connect(documentTabs, &DocumentTabs::tabCountChanged, this, [this]() {
-        welcomeClosed = false;
-        refreshWelcome();
-    });
-    connect(welcome, &WelcomePage::closeRequested, this, [this]() {
-        welcomeClosed = true;
         refreshWelcome();
     });
     connect(welcome, &WelcomePage::newFileRequested, this, &MainWindow::newFile);
@@ -2867,6 +2892,13 @@ MainWindow::MainWindow(
         &WelcomePage::recentFileRequested,
         this,
         &MainWindow::openRecentFile
+    );
+
+    connect(
+        welcome,
+        &WelcomePage::openProjectRequested,
+        this,
+        &MainWindow::openProjectFolder
     );
 
     output = new QPlainTextEdit(this);
@@ -3665,6 +3697,8 @@ bool MainWindow::openPath(const QString &path) {
 
     recordRecentFile(absolutePath);
 
+    selectTreeFile(absolutePath);
+
     return true;
 }
 
@@ -3846,7 +3880,12 @@ void MainWindow::openProject() {
     }
 
     if (!QFile::exists(dir + "/pebble.toml")) {
-        QMessageBox::warning(this, "Not a project", "No pebble.toml found.");
+        QMessageBox::warning(
+            this,
+            "Not a Pebble project",
+            "The selected directory does not contain a pebble.toml manifest file. "
+            "A Pebble project requires a pebble.toml at its root."
+        );
         return;
     }
 
@@ -3855,26 +3894,117 @@ void MainWindow::openProject() {
 
     clearDiagnostics();
 
+    refreshWatcherPaths();
+
     refreshProjectTree();
     statusBar()->showMessage("Opened " + dir);
+}
+
+void MainWindow::openProjectFolder() {
+    const QString dir = QFileDialog::getExistingDirectory(
+        this,
+        "Open Pebble Project"
+    );
+
+    if (dir.isEmpty()) {
+        return;
+    }
+
+    if (!QFile::exists(dir + "/pebble.toml")) {
+        QMessageBox::warning(
+            this,
+            "Not a Pebble project",
+            "The selected directory does not contain a pebble.toml manifest file. "
+            "A Pebble project requires a pebble.toml at its root."
+        );
+        return;
+    }
+
+    projectDir = dir;
+    refreshIntelliSenseProjectPackages();
+
+    clearDiagnostics();
+
+    refreshWatcherPaths();
+
+    refreshProjectTree();
+    statusBar()->showMessage("Opened " + dir);
+}
+
+void MainWindow::refreshWatcherPaths() {
+    if (projectDir.isEmpty()) {
+        projectWatcher->removePaths(projectWatcher->directories());
+        return;
+    }
+
+    projectWatcher->removePaths(projectWatcher->directories());
+
+    projectWatcher->addPath(projectDir);
+
+    QDirIterator it(
+        projectDir,
+        QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden,
+        QDirIterator::Subdirectories
+    );
+    while (it.hasNext()) {
+        projectWatcher->addPath(it.next());
+    }
+}
+
+QStringList MainWindow::expandedTreePaths() const {
+    QStringList paths;
+
+    for (int index = 0; index < tree->topLevelItemCount(); ++index) {
+        QTreeWidgetItem *item = tree->topLevelItem(index);
+        if (item->isExpanded()) {
+            paths << item->data(0, Qt::UserRole).toString();
+            collectExpandedPaths(item, paths);
+        }
+    }
+
+    return paths;
+}
+
+void MainWindow::collectExpandedPaths(
+    QTreeWidgetItem *parent,
+    QStringList &paths
+) const {
+    for (int index = 0; index < parent->childCount(); ++index) {
+        QTreeWidgetItem *child = parent->child(index);
+        if (child->isExpanded()) {
+            paths << child->data(0, Qt::UserRole).toString();
+            collectExpandedPaths(child, paths);
+        }
+    }
+}
+
+void MainWindow::restoreTreeExpansion(
+    QTreeWidgetItem *parent,
+    const QStringList &expandedPaths
+) const {
+    for (int index = 0; index < parent->childCount(); ++index) {
+        QTreeWidgetItem *child = parent->child(index);
+        QString path = child->data(0, Qt::UserRole).toString();
+
+        if (expandedPaths.contains(path)) {
+            child->setExpanded(true);
+            restoreTreeExpansion(child, expandedPaths);
+        }
+    }
 }
 
 void MainWindow::populateTree(const QString &dir, QTreeWidgetItem *parent) {
     QDir directory(dir);
 
     const QFileInfoList entries = directory.entryInfoList(
-        QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot
+        QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot,
+        QDir::DirsFirst | QDir::Name
     );
+
+    QFileIconProvider iconProvider;
 
     for (const QFileInfo &info : entries) {
         if (info.fileName().startsWith(".") || info.fileName() == "build") {
-            continue;
-        }
-
-        const bool isDirectory = info.isDir();
-        const bool isSource = info.isFile() && info.suffix() == sourceSuffix();
-
-        if (!isDirectory && !isSource) {
             continue;
         }
 
@@ -3893,8 +4023,15 @@ void MainWindow::populateTree(const QString &dir, QTreeWidgetItem *parent) {
         item->setToolTip(0, info.absoluteFilePath());
 
         if (info.isDir()) {
+            item->setIcon(0, iconProvider.icon(QFileIconProvider::Folder));
             item->setForeground(0, QBrush(QColor(theme::textDim)));
             populateTree(info.absoluteFilePath(), item);
+        } else {
+            item->setIcon(0, iconProvider.icon(info));
+            const bool isSource = info.suffix() == sourceSuffix();
+            item->setForeground(0, QBrush(
+                isSource ? QColor(theme::text) : QColor(theme::textDim)
+            ));
         }
     }
 }
@@ -3911,11 +4048,21 @@ void MainWindow::refreshProjectTree() {
     }
 
     const QString selected = selectedTreePath();
+    const QString activeFile = tree->activeFile();
+    const QStringList expanded = expandedTreePaths();
 
     tree->clear();
     populateTree(projectDir, nullptr);
 
-    selectTreePath(selected);
+    for (int index = 0; index < tree->topLevelItemCount(); ++index) {
+        restoreTreeExpansion(tree->topLevelItem(index), expanded);
+    }
+
+    if (!activeFile.isEmpty() && QFile::exists(activeFile)) {
+        selectTreePath(activeFile);
+    } else if (!selected.isEmpty()) {
+        selectTreePath(selected);
+    }
 }
 
 void MainWindow::collectTreeEntries(
@@ -3991,9 +4138,29 @@ void MainWindow::selectTreePath(const QString &path) {
 
         if (item != nullptr) {
             tree->setCurrentItem(item);
+            tree->scrollToItem(item);
             return;
         }
     }
+}
+
+void MainWindow::selectTreeFile(const QString &path) {
+    if (path.isEmpty()) {
+        return;
+    }
+
+    tree->setActiveFile(path);
+    selectTreePath(path);
+}
+
+void MainWindow::updateTreeSelection() {
+    const DocumentEditor *document = currentDocument();
+
+    if (document == nullptr || document->path.isEmpty()) {
+        return;
+    }
+
+    selectTreeFile(document->path);
 }
 
 bool MainWindow::restoreProject() {
@@ -4033,6 +4200,7 @@ bool MainWindow::restoreProject() {
 
     projectDir = info.absoluteFilePath();
     refreshIntelliSenseProjectPackages();
+    refreshWatcherPaths();
     refreshProjectTree();
     statusBar()->showMessage("Restored project " + projectDir);
 
@@ -4237,6 +4405,7 @@ bool MainWindow::createDirectoryAt(
         return false;
     }
 
+    refreshWatcherPaths();
     refreshProjectTree();
 
     return true;
@@ -4285,6 +4454,8 @@ bool MainWindow::renamePath(const QString &path, const QString &newName) {
         notify("Error", "Rename failed.");
         return false;
     }
+
+    refreshWatcherPaths();
 
     for (int index = 0; index < tabs->count(); ++index) {
         DocumentEditor *document = documentAt(index);
@@ -4358,6 +4529,8 @@ bool MainWindow::deletePath(const QString &path) {
         notify("Error", "Delete failed.");
         return false;
     }
+
+    refreshWatcherPaths();
 
     pruneRecentFiles();
     saveRecentFiles();
@@ -4942,6 +5115,8 @@ void MainWindow::activeDocumentChanged(int) {
 
     updateStatus();
     updateWindowTitle();
+
+    updateTreeSelection();
 }
 
 void MainWindow::undoActiveDocument() {
@@ -6215,7 +6390,7 @@ void MainWindow::refreshWelcome() {
     QWidget *page = static_cast<QWidget *>(tabs);
 
     if (tabs->count() == 0) {
-        page = welcomeClosed ? blankPage : static_cast<QWidget *>(welcome);
+        page = static_cast<QWidget *>(welcome);
     }
 
     editorStack->setCurrentWidget(page);

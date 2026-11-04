@@ -5,12 +5,8 @@ repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 pkgver="$(sed -n "s/^pkgver=//p" "${repo_root}/PKGBUILD")"
 source_archive="pebble-${pkgver}.tar.gz"
 output_dir="${repo_root}/package-output"
-
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/pebble-package-XXXXXX")"
-
-cleanup() {
-    rm -rf -- "$work_dir"
-}
+cleanup() { rm -rf -- "$work_dir"; }
 trap cleanup EXIT
 
 cd "$repo_root"
@@ -20,8 +16,9 @@ if [[ -e "$source_archive" ]]; then
     exit 1
 fi
 
-tar -cf - \
-    -C "$repo_root" \
+
+tar --create --file=- \
+    --directory="$repo_root" \
     --mtime='@0' \
     --sort=name \
     --exclude='./.git' \
@@ -40,6 +37,8 @@ tar -cf - \
     --exclude='./src/build-root/*' \
     --exclude='./src/src' \
     --exclude='./src/src/*' \
+    --exclude='./src/Pebble-*' \
+    --exclude='./src/pebble-*.tar.gz' \
     --exclude='./examples/*/build' \
     --exclude='./examples/*/build/*' \
     --exclude='./dist' \
@@ -48,9 +47,15 @@ tar -cf - \
     --exclude='./package-output/*' \
     --exclude='./pkg' \
     --exclude='./pkg/*' \
+    --exclude='./release-assets' \
+    --exclude='./release-assets/*' \
+    --exclude='./CMakeFiles' \
+    --exclude='./CMakeFiles/*' \
     --exclude='./imgui.ini' \
+    --exclude='./:GITHUB_ENV' \
+    --exclude='./:GITHUB_PATH' \
     --exclude='./pebble-linux-x86_64.tar.gz' \
-    --exclude="./pebble-${pkgver}.tar.gz" \
+    --exclude='./pebble-*.tar.gz' \
     --exclude='./*.pkg.tar.zst' \
     . | gzip -n > "${work_dir}/${source_archive}"
 
@@ -62,9 +67,7 @@ pkgbuild="${work_dir}/PKGBUILD"
 cp -- "${repo_root}/PKGBUILD" "$pkgbuild"
 
 replacement="sha256sums=('${checksum}')"
-awk -v replacement="$replacement" \
-    '/^sha256sums=/ { print replacement; next } { print }' \
-    "$pkgbuild" > "${pkgbuild}.patched"
+awk -v replacement="$replacement" '/^sha256sums=/ { print replacement; next } { print }' "$pkgbuild" > "${pkgbuild}.patched"
 mv -f -- "${pkgbuild}.patched" "$pkgbuild"
 
 cd "$work_dir"

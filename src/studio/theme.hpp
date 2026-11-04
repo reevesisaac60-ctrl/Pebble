@@ -85,8 +85,6 @@ QString studioStyleSheet();
 
 QFont studioCodeFont(int pointSize);
 
-QFont studioUiFont(int pointSize);
-
 QFont studioApplicationFont();
 
 void applyStudioTheme(QApplication &application);

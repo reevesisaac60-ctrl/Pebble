@@ -189,7 +189,7 @@ QString studioStyleSheet() {
    GlassSurface panels composite a blurred, darkened copy beneath their crisp
    child widgets. */
 QMainWindow { background: transparent; }
-QWidget { color: @text@; }
+QWidget { color: @text@; font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace; }
 QLabel { background: transparent; }
 
 /* The menu bar. */
@@ -463,19 +463,6 @@ QFont studioApplicationFont() {
     QFont font = studioCodeFont(10);
 
     font.setPointSizeF(9.5);
-
-    return font;
-}
-
-QFont studioUiFont(int pointSize) {
-    QFont font;
-
-    font.setFamilies({
-        QStringLiteral("Noto Sans"),
-        QStringLiteral("DejaVu Sans"),
-        QStringLiteral("sans-serif")
-    });
-    font.setPointSize(pointSize);
 
     return font;
 }

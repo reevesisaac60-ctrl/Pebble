@@ -383,9 +383,6 @@ public:
     QStringList recentFiles() const { return recentPaths; }
     bool showsNoRecentFiles() const;
 
-    QTabBar *tabBar() const { return stripTabBar; }
-    TabCloseButton *closeButton() const { return stripCloseButton; }
-
     QPushButton *newFileButton() const { return newFileButtonWidget; }
     QPushButton *openFileButton() const { return openFileButtonWidget; }
     QPushButton *openExampleButton() const { return openExampleButtonWidget; }
@@ -395,19 +392,17 @@ signals:
     void newFileRequested();
     void openFileRequested();
     void openExampleRequested();
+    void openProjectRequested();
     void recentFileRequested(const QString &path);
-    void closeRequested();
 
 private:
     QPushButton *addLink(QWidget *parent, const QString &label);
-
-    QTabBar *stripTabBar = nullptr;
-    TabCloseButton *stripCloseButton = nullptr;
 
     QWidget *recentHost = nullptr;
     QPushButton *newFileButtonWidget = nullptr;
     QPushButton *openFileButtonWidget = nullptr;
     QPushButton *openExampleButtonWidget = nullptr;
+    QPushButton *openProjectButtonWidget = nullptr;
     QList<QPushButton *> recentButtonList;
     QStringList recentPaths;
 };
@@ -476,11 +471,18 @@ class ProjectTree : public QTreeWidget {
 public:
     explicit ProjectTree(QWidget *parent = nullptr);
 
+    void setActiveFile(const QString &path);
+    QString activeFile() const;
+
 signals:
     void refreshRequested();
+    void itemActivated(const QString &path);
 
 protected:
     void showEvent(QShowEvent *event) override;
+
+private:
+    QString m_activeFile;
 };
 
 enum class OutputLevel {
@@ -610,7 +612,6 @@ public:
 
     WelcomePage *welcomePage() const { return welcome; }
     bool welcomePageVisible() const;
-    bool welcomeDismissed() const { return welcomeClosed; }
     QStringList examplesDirectories() const;
     QStringList examplePaths() const;
     QString exampleLabel(const QString &path) const;
@@ -651,6 +652,9 @@ public:
 
     QString statusEncoding() const;
 
+    void selectTreeFile(const QString &path);
+    void updateTreeSelection();
+
 protected:
     void closeEvent(QCloseEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
@@ -658,6 +662,7 @@ protected:
 
 private slots:
     void openProject();
+    void openProjectFolder();
     void openTreeFile(QTreeWidgetItem *item, int column);
     void createFile(QTreeWidgetItem *item);
     void createDirectory(QTreeWidgetItem *item);
@@ -732,6 +737,16 @@ private:
     void clearDiagnostics();
     void updateDiagnosticsTitle();
     void populateTree(const QString &directory, QTreeWidgetItem *parent);
+    void collectExpandedPaths(
+        QTreeWidgetItem *parent,
+        QStringList &paths
+    ) const;
+    void restoreTreeExpansion(
+        QTreeWidgetItem *parent,
+        const QStringList &expandedPaths
+    ) const;
+    QStringList expandedTreePaths() const;
+    void refreshWatcherPaths();
     void collectTreeEntries(
         const QTreeWidgetItem *item,
         const QString &prefix,
@@ -781,8 +796,6 @@ private:
     QTabWidget *tabs = nullptr;
     QStackedWidget *editorStack = nullptr;
     WelcomePage *welcome = nullptr;
-    QWidget *blankPage = nullptr;
-    bool welcomeClosed = false;
     QLineEdit *programInput = nullptr;
     QLabel *statusEncodingLabel = nullptr;
     SyntaxColourMap syntaxColourMap;
@@ -833,6 +846,7 @@ private:
     QStringList projectPackageNames;
     QList<NavigationLocation> definitionHistory;
     QFileSystemWatcher *projectManifestWatcher = nullptr;
+    QFileSystemWatcher *projectWatcher = nullptr;
     QString settingsOrganisation;
     QString settingsApplication;
     bool explorerShown = true;

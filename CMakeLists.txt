@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
 project(Pebble
-    VERSION 0.3.1
+    VERSION 0.3.2
     DESCRIPTION "Native Pebble language and game creation platform"
     LANGUAGES CXX
 )

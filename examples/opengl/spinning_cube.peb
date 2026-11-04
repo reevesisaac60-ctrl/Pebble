@@ -1,1 +1,66 @@
+import package Window
+import package OpenGL
+import package time
+import package Math
+import package filesystem
+import package Log
 
+fn main() {
+    let width = 800
+    let height = 600
+    Window:Create("Pebble - Spinning Cube", width, height)
+
+    if !OpenGL:Initialize() {
+        Log:Error("OpenGL function loading failed")
+        Window:Close()
+        return
+    }
+
+    OpenGL:Viewport(width, height)
+    OpenGL:EnableDepthTest()
+
+    OpenGL:ClearColor(0.11, 0.11, 0.14, 1.0)
+
+    let vertexShader = filesystem.read("spinning_cube.vert")
+    let fragmentShader = filesystem.read("spinning_cube.frag")
+
+    let program = OpenGL:CreateProgram(vertexShader, fragmentShader)
+    let projectionLocation = OpenGL:UniformLocation(program, "uProjection")
+    let viewLocation = OpenGL:UniformLocation(program, "uView")
+    let modelLocation = OpenGL:UniformLocation(program, "uModel")
+    let timeLocation = OpenGL:UniformLocation(program, "uTime")
+
+    OpenGL:UseProgram(program)
+    OpenGL:UniformMat4(projectionLocation, 1.299, 0.0, 0.0, 0.0, 0.0, 1.732, 0.0, 0.0, 0.0, 0.0, -1.002, -1.0, 0.0, 0.0, -0.2002, 0.0)
+    OpenGL:UniformMat4(viewLocation, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -6.0, 1.0)
+
+    let positions = OpenGL:CreateBuffer()
+    OpenGL:BindArrayBuffer(positions)
+    OpenGL:UploadArrayBuffer(
+        "-0.5,-0.5,-0.5, 0.0,0.0, 0.5,-0.5,-0.5, 1.0,0.0, 0.5,0.5,-0.5, 1.0,1.0, -0.5,0.5,-0.5, 0.0,1.0, "
+        "-0.5,-0.5,0.5, 0.0,0.0, 0.5,-0.5,0.5, 1.0,0.0, 0.5,0.5,0.5, 1.0,1.0, -0.5,0.5,0.5, 0.0,1.0, "
+        "-0.5,-0.5,-0.5, 0.0,1.0, -0.5,0.5,-0.5, 0.0,0.0, -0.5,0.5,0.5, 1.0,0.0, -0.5,-0.5,0.5, 1.0,1.0, "
+        "0.5,-0.5,-0.5, 0.0,1.0, 0.5,0.5,-0.5, 0.0,0.0, 0.5,0.5,0.5, 1.0,0.0, 0.5,-0.5,0.5, 1.0,1.0, "
+        "-0.5,-0.5,-0.5, 0.0,0.0, 0.5,-0.5,-0.5, 1.0,0.0, 0.5,-0.5,0.5, 1.0,1.0, -0.5,-0.5,0.5, 0.0,1.0, "
+        "-0.5,0.5,-0.5, 0.0,1.0, 0.5,0.5,-0.5, 1.0,1.0, 0.5,0.5,0.5, 1.0,0.0, -0.5,0.5,0.5, 0.0,0.0"
+    )
+    OpenGL:VertexAttribute(0, 3, 20, 0)
+    OpenGL:VertexAttribute(1, 2, 20, 12)
+
+    while !Window:ShouldClose() {
+        Window:PollEvents()
+        OpenGL:Clear()
+
+        OpenGL:UseProgram(program)
+        OpenGL:UniformFloat(timeLocation, time.now())
+
+        OpenGL:BindArrayBuffer(positions)
+        OpenGL:DrawArrays(24)
+        Window:SwapBuffers()
+    }
+
+    OpenGL:DeleteBuffer(positions)
+    OpenGL:DeleteProgram(program)
+    OpenGL:Shutdown()
+    Window:Close()
+}

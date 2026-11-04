@@ -1,49 +1,96 @@
 # Pebble
 
-Pebble is a native programming language and development environment for building programs. Its compiler translates Pebble source code into **C++20 or C11**, then uses the platform's native compiler to produce standalone executables.
+**Pebble is a native programming language and development environment for building standalone programs.**
 
-The project includes two compiler frontends and Pebble Studio, a native desktop IDE.
+The project includes two compiler frontends, a built-in package system, native executable generation, and **Pebble Studio** — a desktop development environment designed specifically for Pebble.
 
-| Component | Sources | Generated code |
-|---|---|---|
-| `pebble` | `include/pebble/`, `src/` | C++20 |
-| `pebble_native` | `include/pebble_c/`, `src/c/` | C11 |
+Pebble aims to provide a complete programming workflow, from writing and checking source code to building and running native applications.
 
-Both compiler frontends implement the same language, package system and command-line interface.
+**Latest release: [v0.3.2](https://github.com/reevesisaac60-ctrl/Pebble/releases/tag/v0.3.2)**
 
 ## Features
 
-- Native compilation through C++20 and C11.
-- Two compiler frontends: `pebble` and `pebble_native`.
-- Pebble Studio desktop development environment.
-- Built-in standard library packages.
-- Project manifests and dependency management.
-- Native executable generation.
-- OpenGL support.
-- Included examples and project resources.
+- **Native compilation** — build Pebble programs into standalone executables.
+- **Two compiler frontends** — `pebble` and `pebble_native`.
+- **Pebble Studio** — a dedicated native desktop IDE.
+- **Standard library** — built-in packages for common programming tasks.
+- **Package management** — project manifests, dependencies, lockfiles, and package inspection.
+- **OpenGL support** — create graphics applications using OpenGL functionality.
+- **Language tooling** — lexical analysis, parsing, and type checking.
+- **Examples and resources** — explore included programs and project assets.
+
+## Project components
+
+| Component | Description |
+|---|---|
+| `pebble` | Main Pebble compiler and command-line frontend. |
+| `pebble_native` | C-based compiler frontend implementing the same language interface. |
+| `pebble_studio` | Native desktop development environment. |
+
+Both compiler frontends support the same language and package-management workflow.
+
+## Installation
+
+### Windows
+
+Pebble provides a Windows x64 installer.
+
+**[Download Pebble v0.3.2 for Windows](https://github.com/reevesisaac60-ctrl/Pebble/releases/download/v0.3.2/Pebble-0.3.2-Windows-x64-Setup.exe)**
+
+The installer includes Pebble Studio and the compiler executables.
+
+**Windows development requirements**
+
+To compile and run Pebble programs on Windows, an external native development toolchain is currently required.
+
+Install the MSYS2 UCRT64 toolchain and GLFW, and ensure the UCRT64 `bin` directory is available through your system `PATH`.
+
+Pebble relies on the host system's native compiler and development libraries when building programs. The installer does not bundle the complete development toolchain.
+
+### Arch Linux
+
+An Arch Linux package for v0.3.2 has been built and verified locally. Check the [GitHub Releases page](https://github.com/reevesisaac60-ctrl/Pebble/releases) for its publication.
+
+### Other Linux distributions
+
+Building from source requires the appropriate C/C++ compiler, CMake, Ninja, Qt 6 development libraries, and the required graphics dependencies.
+
+Platform-specific packaging and installation instructions will be expanded as support develops.
 
 ## Command-line interface
 
-The `pebble` command provides the following operations:
+Pebble provides commands for working with individual source files and complete projects.
 
 | Command | Description |
 |---|---|
-| `pebble lex <file.peb>` | Print the tokens of a program. |
-| `pebble parse <file.peb>` | Print the syntax tree of a program. |
-| `pebble check [<file.peb>]` | Type-check a file or the project in the working directory. |
+| `pebble lex <file.peb>` | Display the tokens produced by the lexer. |
+| `pebble parse <file.peb>` | Display the parsed syntax tree. |
+| `pebble check [<file.peb>]` | Type-check a file or the current project. |
 | `pebble build [<file.peb>]` | Build a native executable. |
 | `pebble run [<file.peb>]` | Build and run a program. |
-| `pebble init [<name>]` | Create a new package. |
-| `pebble add <path>` | Add a path dependency to the manifest. |
-| `pebble remove <package>` | Remove a dependency from the manifest. |
-| `pebble install` | Resolve dependencies and write the lockfile. |
-| `pebble update` | Resolve dependencies again and refresh the lockfile. |
-| `pebble tree` | Print the dependency tree. |
-| `pebble package` | Stage a distributable copy of the package. |
+| `pebble init [<name>]` | Create a new Pebble package. |
+| `pebble add <path>` | Add a path dependency. |
+| `pebble remove <package>` | Remove a package dependency. |
+| `pebble install` | Resolve dependencies and generate a lockfile. |
+| `pebble update` | Refresh dependency resolution and the lockfile. |
+| `pebble tree` | Display the dependency tree. |
+| `pebble package` | Stage a distributable copy of a package. |
 
-`pebble_native` supports the same commands.
+`pebble_native` supports the same command-line operations.
 
-## A first program
+For the complete list of options, run:
+
+```sh
+pebble --help
+```
+
+Or:
+
+```sh
+pebble_native --help
+```
+
+## Your first Pebble program
 
 Create a file named `main.peb`:
 
@@ -58,81 +105,35 @@ fn main() {
 }
 ```
 
-Run it with:
+Run the program:
 
 ```sh
 pebble run main.peb
 ```
 
-Pebble compiles the source into a native executable using the platform's C++ or C compiler.
+Pebble builds and executes the program using the native compilation toolchain.
 
 ## Standard library
 
-Pebble includes five built-in packages that are available to programs without installing external dependencies:
+Pebble includes built-in packages for commonly used functionality.
 
 | Package | Description |
 |---|---|
 | `math` | Mathematical functionality. |
-| `string` | String-related functionality. |
+| `string` | String manipulation and related operations. |
 | `time` | Time-related functionality. |
 | `filesystem` | Filesystem operations. |
 | `Log` | Logging functionality. |
 
+These packages are available to Pebble programs without installing external dependencies.
+
 ## Pebble Studio
 
-Pebble Studio is Pebble's native desktop development environment.
+Pebble Studio is the native desktop IDE included with the Pebble toolchain.
 
-It provides an integrated workspace for editing and working with Pebble projects, alongside the compiler and language tooling.
+It provides an integrated environment for developing Pebble applications, bringing together source editing and language tooling in one application.
 
-## Installation
-
-### Arch Linux and Arch-based distributions
-
-Install the build prerequisites:
-
-```sh
-sudo pacman -S --needed base-devel cmake ninja python qt6-base qt6-tools
-```
-
-From the repository root, build the Arch package:
-
-```sh
-./scripts/build-arch-package.sh
-```
-
-The script creates an Arch Linux package from the current source tree using `makepkg`.
-
-The package includes:
-
-- Pebble CLI.
-- C compiler frontend.
-- Pebble Studio.
-- Examples.
-- Studio assets.
-
-The removed engine is not included.
-
-### Windows
-
-Pebble provides a Windows x64 installer through the **Windows build and installer** GitHub Actions workflow.
-
-To obtain the installer:
-
-1. Open the repository on GitHub.
-2. Navigate to the **Actions** tab.
-3. Select the Windows build and installer workflow.
-4. Open a completed workflow run.
-5. Download the `pebble-windows-x64-installer` artifact.
-
-The Windows installer packages Pebble Studio and the Pebble CLI executables.
-
-**Additional development tools are currently required to compile and run Pebble programs on Windows.**
-
-Install the MSYS2 UCRT64 toolchain and GLFW, then ensure the UCRT64 `bin` directory is included in your system `PATH`.
-
-This is necessary because Pebble compiles generated C and C++ source code using the host system's compiler.
-
-The current Windows installer does not bundle the complete native development toolchain.
+Studio is designed to make working with Pebble projects easier without requiring a separate editor.
 
 ## Building from source
 
@@ -143,26 +144,48 @@ git clone https://github.com/reevesisaac60-ctrl/Pebble.git
 cd Pebble
 ```
 
-Build requirements depend on the platform and the components being built. On Arch Linux, use the prerequisites listed in the installation section.
+### Build requirements
 
-Build the Arch package:
+- CMake 3.25 or newer
+- Ninja
+- A compatible C and C++ compiler
+- Qt 6 development libraries
+- GLFW and the required OpenGL development libraries
+
+### Configure and build
 
 ```sh
-./scripts/build-arch-package.sh
+cmake -S . -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release
+
+cmake --build build --parallel
 ```
+
+The project includes the `pebble`, `pebble_native`, and `pebble_studio` build targets.
+
+Platform-specific dependencies and packaging requirements may vary.
 
 ## Examples
 
-The repository includes example Pebble programs demonstrating language features and built-in functionality.
+The repository includes example Pebble programs demonstrating language features, built-in packages, and graphics functionality.
 
-The examples are included with the Arch package and can also be explored directly in the source repository.
+Explore the `examples/` directory to see how Pebble programs are structured and how the available functionality can be used.
 
 ## Project status
 
-Pebble is under active development. Features, APIs, tooling and platform support may change as the project evolves.
+**Pebble is actively developed.**
 
-Windows installation is available through the GitHub Actions workflow, but compiling and running Pebble programs on Windows currently requires an externally installed development toolchain.
+Version `0.3.2` is an early release of the language and its development environment. Features, APIs, tooling, and platform support may change as the project evolves.
+
+Contributions, bug reports, and suggestions are welcome.
 
 ## License
 
-See the repository's `LICENSE` file for licensing information.
+See the [`LICENSE`](LICENSE) file for licensing information.
+
+## Links
+
+- [GitHub repository](https://github.com/reevesisaac60-ctrl/Pebble)
+- [Latest release](https://github.com/reevesisaac60-ctrl/Pebble/releases/latest)
+- [v0.3.2 release notes](https://github.com/reevesisaac60-ctrl/Pebble/releases/tag/v0.3.2)
+- [Report an issue](https://github.com/reevesisaac60-ctrl/Pebble/issues)

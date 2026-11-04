@@ -1,6 +1,6 @@
 # Maintainer: Pebble project
 pkgname=pebble
-pkgver=0.3.1
+pkgver=0.3.2
 pkgrel=1
 pkgdesc="Pebble language, compiler, and native Qt Studio"
 arch=('x86_64')
@@ -18,7 +18,7 @@ makedepends=(
     'qt6-tools'
 )
 source=("$pkgname-$pkgver.tar.gz")
-sha256sums=('b88eaed87fbb2ab96da91f4c749f92e676ff8dfe20c73a8cfc2a9dfc573074a8')
+sha256sums=('0f17082f1fd4a4843301b402c91fe475d8aa8872bbe28b2b86a2de4e48795bb4')
 
 build() {
     cmake -S "$srcdir" -B "$srcdir/build-root" -G Ninja \
