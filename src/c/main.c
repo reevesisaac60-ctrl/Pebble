@@ -781,6 +781,12 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    if (strcmp(command, "--help") == 0 || strcmp(command, "-h") == 0) {
+        usage(argv[0]);
+        free(root);
+        return 0;
+    }
+
     if (strcmp(command, "init") == 0) {
         int result;
 

@@ -449,6 +449,11 @@ int main(int argc, char** argv) {
     const std::string command = argv[1];
     const std::string root = ".";
 
+    if (command == "--help" || command == "-h") {
+        printUsage(argv[0]);
+        return 0;
+    }
+
     if (command == "init") {
         if (argc > 3) {
             printUsage(argv[0]);
