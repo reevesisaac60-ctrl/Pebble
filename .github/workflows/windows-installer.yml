@@ -71,14 +71,26 @@ jobs:
       - name: Build Windows installer
         shell: pwsh
         run: |
+          $version = [regex]::Match(
+            (Get-Content CMakeLists.txt -Raw),
+            'VERSION\s+([0-9]+\.[0-9]+\.[0-9]+)'
+          ).Groups[1].Value
+
+          if (-not $version) {
+            throw "Could not determine Pebble version from CMakeLists.txt"
+          }
+
           choco install innosetup --yes --no-progress
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          & $iscc "packaging\Pebble.iss"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $iscc "/DAppVersion=$version" "packaging\Pebble.iss"
+
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
           name: pebble-windows-x64-installer
-          path: packaging/output/Pebble-0.3.2-Windows-x64-Setup.exe
+          path: packaging/output/Pebble-*-Windows-x64-Setup.exe
           if-no-files-found: error

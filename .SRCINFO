@@ -1,6 +1,6 @@
 pkgbase = pebble
 	pkgdesc = Pebble language, compiler, and native Qt Studio
-	pkgver = 0.3.2
+	pkgver = 0.3.3
 	pkgrel = 1
 	url = https://github.com/reevesisaac60-ctrl/Pebble
 	arch = x86_64
@@ -12,7 +12,7 @@ pkgbase = pebble
 	depends = glfw
 	depends = pkgconf
 	depends = qt6-base
-	source = pebble-0.3.2.tar.gz
-	sha256sums = 0f17082f1fd4a4843301b402c91fe475d8aa8872bbe28b2b86a2de4e48795bb4
+	source = https://github.com/reevesisaac60-ctrl/Pebble/archive/refs/tags/v0.3.3.tar.gz
+	sha256sums = SKIP
 
 pkgname = pebble

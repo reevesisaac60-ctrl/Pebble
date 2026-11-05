@@ -6,7 +6,7 @@ The project includes two compiler frontends, a built-in package system, native e
 
 Pebble aims to provide a complete programming workflow, from writing and checking source code to building and running native applications.
 
-**Latest release: [v0.3.2](https://github.com/reevesisaac60-ctrl/Pebble/releases/tag/v0.3.2)**
+**Latest release: [v0.3.3](https://github.com/reevesisaac60-ctrl/Pebble/releases/tag/v0.3.3)**
 
 ## Features
 
@@ -35,7 +35,7 @@ Both compiler frontends support the same language and package-management workflo
 
 Pebble provides a Windows x64 installer.
 
-**[Download Pebble v0.3.2 for Windows](https://github.com/reevesisaac60-ctrl/Pebble/releases/download/v0.3.2/Pebble-0.3.2-Windows-x64-Setup.exe)**
+**[Download Pebble v0.3.3 for Windows](https://github.com/reevesisaac60-ctrl/Pebble/releases/download/v0.3.3/Pebble-0.3.3-Windows-x64-Setup.exe)**
 
 The installer includes Pebble Studio and the compiler executables.
 
@@ -47,13 +47,31 @@ Install the MSYS2 UCRT64 toolchain and GLFW, and ensure the UCRT64 `bin` directo
 
 Pebble relies on the host system's native compiler and development libraries when building programs. The installer does not bundle the complete development toolchain.
 
+### Linux Mint and Ubuntu
+
+Prebuilt Debian packages are provided for:
+
+- Linux Mint 22.3
+- Ubuntu 24.04 LTS
+
+**[Download Pebble v0.3.3 for Linux (amd64)](https://github.com/reevesisaac60-ctrl/Pebble/releases/download/v0.3.3/pebble_0.3.3_amd64.deb)**
+
+Install the downloaded package using:
+
+```bash
+sudo apt install ./pebble_0.3.3_amd64.deb
+```
+
+APT automatically resolves the package's required runtime dependencies.
+
 ### Arch Linux
 
-An Arch Linux package for v0.3.2 has been built and verified locally. Check the [GitHub Releases page](https://github.com/reevesisaac60-ctrl/Pebble/releases) for its publication.
+An Arch Linux package for v0.3.3 will be provided on the [GitHub Releases page](https://github.com/reevesisaac60-ctrl/Pebble/releases/tag/v0.3.3).
 
 ### Other Linux distributions
 
 Building from source requires the appropriate C/C++ compiler, CMake, Ninja, Qt 6 development libraries, and the required graphics dependencies.
+
 
 Platform-specific packaging and installation instructions will be expanded as support develops.
 
@@ -183,7 +201,7 @@ Explore the `examples/` directory to see how Pebble programs are structured and 
 
 **Pebble is actively developed.**
 
-Version `0.3.2` is an early release of the language and its development environment. Features, APIs, tooling, and platform support may change as the project evolves.
+Version `0.3.3` is an early release of the language and its development environment. Features, APIs, tooling, and platform support may change as the project evolves.
 
 Contributions, bug reports, and suggestions are welcome.
 
@@ -195,5 +213,5 @@ See the [`LICENSE`](LICENSE) file for licensing information.
 
 - [GitHub repository](https://github.com/reevesisaac60-ctrl/Pebble)
 - [Latest release](https://github.com/reevesisaac60-ctrl/Pebble/releases/latest)
-- [v0.3.2 release notes](https://github.com/reevesisaac60-ctrl/Pebble/releases/tag/v0.3.2)
+- [v0.3.3 release notes](https://github.com/reevesisaac60-ctrl/Pebble/releases/tag/v0.3.3)
 - [Report an issue](https://github.com/reevesisaac60-ctrl/Pebble/issues)

@@ -1,0 +1,14 @@
+Source: pebble
+Section: devel
+Priority: optional
+Maintainer: Pebble Project
+Build-Depends: build-essential, cmake, ninja-build, pkg-config, qt6-base-dev, libglfw3-dev, libgl1-mesa-dev, dpkg-dev
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+
+Package: pebble
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Pebble language, compiler, and native Qt Studio
+ Pebble is a native programming language and development environment.
+ It includes compiler frontends, a package system, and Pebble Studio.
